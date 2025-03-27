@@ -9,7 +9,6 @@ import com.awesomecopilot.web.resolver.DateArgumentResolver;
 import com.awesomecopilot.web.resolver.LocalDateArgumentResolver;
 import com.awesomecopilot.web.resolver.LocalDateTimeArgumentResolver;
 import com.awesomecopilot.web.resolver.LocalTimeArgumentResolver;
-import com.awesomecopilot.boot.web.intercepter.IdempotentIntercepter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -173,7 +172,6 @@ public class CopilotMvcConfiguration implements WebMvcConfigurer {
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
 		//基于token的幂等性保证
-		registry.addInterceptor(new IdempotentIntercepter());
 		WebMvcConfigurer.super.addInterceptors(registry);
 	}
 }
