@@ -1,0 +1,3 @@
+com\awesomecopilot\boot\es\autoconfig\CopilotESProperties.class
+META-INF\spring-configuration-metadata.json
+com\awesomecopilot\boot\es\autoconfig\CopilotESAutoConfiguration.class

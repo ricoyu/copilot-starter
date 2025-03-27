@@ -1,0 +1,41 @@
+package com.awesomecopilot.boot.es.autoconfig;
+
+import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
+/**
+ * <p>
+ * Copyright: (C), 2020/4/23 12:52
+ * <p>
+ * <p>
+ * Company: Sexy Uncle Inc.
+ *
+ * @author Rico Yu ricoyu520@gmail.com
+ * @version 1.0
+ */
+@Data
+@ConfigurationProperties(prefix = "copilot.es")
+public class CopilotESProperties {
+	
+	/**
+	 * 是否启动时初始化Elasticsearch客户端连接
+	 */
+	private boolean init = true;
+	
+	/**
+	 * 聚合时, 桶的最大数量
+	 */
+	private Integer searchMaxBuckets;
+	
+	/**
+	 * 将定义好的 Index Template 写到指定的文件里面
+	 * 文件可以从classpath下读, 也可以从文件系统下读
+	 * <ol>
+	 *     <li/>classpath:event_template.json 从classpath根目录下读
+	 *     <li/>event_template.json           从work dir下读
+	 *     <li/>/root/event_template.json     从指定目录下读
+	 * </ol>
+	 */
+	private String[] templates;
+	
+}

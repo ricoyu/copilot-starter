@@ -1,0 +1,5 @@
+com.copilot.boot.web.autoconfig.CopilotMvcConfiguration
+com.copilot.boot.web.autoconfig.CopilotThreadAutoConfiguration
+com.copilot.boot.web.autoconfig.CopilotLocaleConfiguration
+com.copilot.boot.web.autoconfig.CopilotWebsocketAutoConfiguration
+com.awesomecopilot.boot.web.autoconfig.HttpMessageConverterAutoConfiguration

@@ -1,0 +1,9 @@
+com\awesomecopilot\boot\oauth2\properties\CopilotOauth2Properties$JWT.class
+com\awesomecopilot\boot\oauth2\autoconfig\CopilotOauth2AuthorizationServerAutoConfig.class
+com\awesomecopilot\boot\oauth2\autoconfig\CopilotOAuth2WebSecurityAutoConfig.class
+com\awesomecopilot\boot\oauth2\properties\CopilotOauth2Properties.class
+com\awesomecopilot\boot\oauth2\service\PreAuthenticationUserDetailsService.class
+com\awesomecopilot\boot\oauth2\errors\SecurityErrors.class
+com\awesomecopilot\boot\oauth2\policy\LoginPolicyService.class
+META-INF\spring-configuration-metadata.json
+com\awesomecopilot\boot\oauth2\policy\LoginPolicyService$Policy.class

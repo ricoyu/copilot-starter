@@ -1,0 +1,8 @@
+com\awesomecopilot\cloud\sentinel\RestBlockExceptionHandler$CORS.class
+com\awesomecopilot\cloud\feign\aspect\IdempotentAspect.class
+com\awesomecopilot\cloud\feign\interceptor\IdempotentInterceptor.class
+com\awesomecopilot\cloud\feign\annotation\Idempotent.class
+com\awesomecopilot\cloud\sentinel\RestBlockExceptionHandler.class
+com\awesomecopilot\cloud\sentinel\auth\SentinelAuthRequestOriginParser.class
+com\awesomecopilot\cloud\sentinel\auth\AuthFlowInterceptor.class
+com\awesomecopilot\cloud\sentinel\RestBlockExceptionHandler$CORS$CorsBuilder.class

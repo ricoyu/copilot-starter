@@ -1,0 +1,13 @@
+D:\Learning\copilot-starter\copilot-cloud-gateway\src\main\java\com\awesomecopilot\cloud\gateway\handler\CopilotErrorWebExceptionHandler.java
+D:\Learning\copilot-starter\copilot-cloud-gateway\src\main\java\com\awesomecopilot\cloud\gateway\client\CopilotRestTemplate.java
+D:\Learning\copilot-starter\copilot-cloud-gateway\src\main\java\com\awesomecopilot\cloud\gateway\auth\filter\AuthorizationFilter.java
+D:\Learning\copilot-starter\copilot-cloud-gateway\src\main\java\com\awesomecopilot\cloud\gateway\auth\common\TokenInfo.java
+D:\Learning\copilot-starter\copilot-cloud-gateway\src\main\java\com\awesomecopilot\cloud\gateway\auth\filter\AuthenticationFilter.java
+D:\Learning\copilot-starter\copilot-cloud-gateway\src\main\java\com\awesomecopilot\cloud\gateway\exception\GatewayException.java
+D:\Learning\copilot-starter\copilot-cloud-gateway\src\main\java\com\awesomecopilot\cloud\gateway\properties\CopilotGatewayExceptionProperties.java
+D:\Learning\copilot-starter\copilot-cloud-gateway\src\main\java\com\awesomecopilot\cloud\gateway\auth\properties\GatewayAuthProperties.java
+D:\Learning\copilot-starter\copilot-cloud-gateway\src\main\java\com\awesomecopilot\cloud\gateway\filter\TimeMonitorGatewayFilterFactory.java
+D:\Learning\copilot-starter\copilot-cloud-gateway\src\main\java\com\awesomecopilot\cloud\gateway\handler\GatewayBlockRequestHandler.java
+D:\Learning\copilot-starter\copilot-cloud-gateway\src\main\java\com\awesomecopilot\cloud\gateway\advice\GatewayExceptionHandlerAdvice.java
+D:\Learning\copilot-starter\copilot-cloud-gateway\src\main\java\com\awesomecopilot\cloud\gateway\predicate\TimeBetweenRoutePredicateFactory.java
+D:\Learning\copilot-starter\copilot-cloud-gateway\src\main\java\com\awesomecopilot\cloud\gateway\auth\filter\JwtAuthenticationFilter.java

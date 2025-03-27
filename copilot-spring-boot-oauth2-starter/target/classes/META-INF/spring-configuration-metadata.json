@@ -1,0 +1,24 @@
+{
+  "groups": [
+    {
+      "name": "copilot.oauth2",
+      "type": "com.awesomecopilot.boot.oauth2.properties.CopilotOauth2Properties",
+      "sourceType": "com.awesomecopilot.boot.oauth2.properties.CopilotOauth2Properties"
+    },
+    {
+      "name": "copilot.oauth2.jwt",
+      "type": "com.awesomecopilot.boot.oauth2.properties.CopilotOauth2Properties$JWT",
+      "sourceType": "com.awesomecopilot.boot.oauth2.properties.CopilotOauth2Properties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "copilot.oauth2.jwt.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否启用JWT token",
+      "sourceType": "com.awesomecopilot.boot.oauth2.properties.CopilotOauth2Properties$JWT",
+      "defaultValue": false
+    }
+  ],
+  "hints": []
+}

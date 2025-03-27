@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/copilot-cloud-gateway-starter/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/copilot-cloud-gateway/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/copilot-spring-boot-es-starter/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/copilot-spring-boot-oauth2-starter/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/copilot-spring-boot-oauth2/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/copilot-spring-boot-security-starter/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/copilot-spring-boot-security/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/copilot-spring-boot-starter/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/copilot-spring-boot-web-starter/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/copilot-spring-boot-web/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/copilot-spring-boot-webflux/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/copilot-spring-boot/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/copilot-spring-cloud-starter/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/copilot-spring-cloud/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />
+  </component>
+</project>

@@ -1,0 +1,44 @@
+{
+  "groups": [
+    {
+      "name": "copilot.idemtotent",
+      "type": "com.awesomecopilot.cloud.properties.IdemtotentProperties",
+      "sourceType": "com.awesomecopilot.cloud.properties.IdemtotentProperties"
+    },
+    {
+      "name": "copilot.sentinel",
+      "type": "com.awesomecopilot.cloud.properties.SentinelProperties",
+      "sourceType": "com.awesomecopilot.cloud.properties.SentinelProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "copilot.idemtotent.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否启用接口幂等性控制, 默认true",
+      "sourceType": "com.awesomecopilot.cloud.properties.IdemtotentProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "copilot.sentinel.enabled",
+      "type": "java.lang.Boolean",
+      "description": "开启后会自动注册Bean: RestBlockExceptionHandler, SentinelResourceAspect",
+      "sourceType": "com.awesomecopilot.cloud.properties.SentinelProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "copilot.sentinel.rest-exception-enabled",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.awesomecopilot.cloud.properties.SentinelProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "copilot.sentinel.sentinel-auth-enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否开启sentinel的授权规则限流, 开启后会注册一个MyRequestOriginParser Bean 只需要在feign的被调用方开启",
+      "sourceType": "com.awesomecopilot.cloud.properties.SentinelProperties",
+      "defaultValue": true
+    }
+  ],
+  "hints": []
+}

@@ -1,0 +1,3 @@
+com.awesomecopilot.boot.web.autoconfig.CopilotConverterAutoConfiguration
+com.awesomecopilot.boot.web.autoconfig.CopilotAutoConfiguration
+com.awesomecopilot.boot.web.autoconfig.CopilotCacheAutoConfiguration

@@ -1,0 +1,146 @@
+{
+  "groups": [
+    {
+      "name": "copilot.oauth2",
+      "type": "com.awesomecopilot.boot.security.props.OAuth2Properties",
+      "sourceType": "com.awesomecopilot.boot.security.props.OAuth2Properties"
+    },
+    {
+      "name": "copilot.security",
+      "type": "com.awesomecopilot.boot.security.props.CopilotSecurityProperties",
+      "sourceType": "com.awesomecopilot.boot.security.props.CopilotSecurityProperties"
+    },
+    {
+      "name": "copilot.security.pic-code",
+      "type": "com.awesomecopilot.boot.security.props.CopilotSecurityProperties$PicCode",
+      "sourceType": "com.awesomecopilot.boot.security.props.CopilotSecurityProperties"
+    },
+    {
+      "name": "copilot.xss",
+      "type": "com.awesomecopilot.boot.security.props.CopilotXSSProperties",
+      "sourceType": "com.awesomecopilot.boot.security.props.CopilotXSSProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "copilot.oauth2.check-token-url",
+      "type": "java.lang.String",
+      "sourceType": "com.awesomecopilot.boot.security.props.OAuth2Properties",
+      "defaultValue": "http:\/\/oauth-service\/oauth\/check_token"
+    },
+    {
+      "name": "copilot.oauth2.client-id",
+      "type": "java.lang.String",
+      "sourceType": "com.awesomecopilot.boot.security.props.OAuth2Properties"
+    },
+    {
+      "name": "copilot.oauth2.client-secret",
+      "type": "java.lang.String",
+      "sourceType": "com.awesomecopilot.boot.security.props.OAuth2Properties"
+    },
+    {
+      "name": "copilot.security.anti-duplicate-submit",
+      "type": "java.lang.Boolean",
+      "description": "是否要开启防止重复提交, 开始@AntiDupSubmit注解支持",
+      "sourceType": "com.awesomecopilot.boot.security.props.CopilotSecurityProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "copilot.security.auth-center-enabled",
+      "type": "java.lang.Boolean",
+      "description": "认证中心提供基于用户名密码方式的登录功能, 如果启用, 用户需要注册一个UserDetailsService实现",
+      "sourceType": "com.awesomecopilot.boot.security.props.CopilotSecurityProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "copilot.security.clear-on-start",
+      "type": "java.lang.Boolean",
+      "description": "是否启动就执行过期token清理",
+      "sourceType": "com.awesomecopilot.boot.security.props.CopilotSecurityProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "copilot.security.context-path",
+      "type": "java.lang.String",
+      "description": "SpringBoot应用的ContentPath或者是Nginx那边反向代理配置的location前缀",
+      "sourceType": "com.awesomecopilot.boot.security.props.CopilotSecurityProperties"
+    },
+    {
+      "name": "copilot.security.login-url",
+      "type": "java.lang.String",
+      "description": "如果启动认证中心模式, 配置登录URL, 默认 \/login",
+      "sourceType": "com.awesomecopilot.boot.security.props.CopilotSecurityProperties",
+      "defaultValue": "\/login"
+    },
+    {
+      "name": "copilot.security.logout-url",
+      "type": "java.lang.String",
+      "description": "如果启动认证中心模式, 配置登出URL, 默认 \/logout",
+      "sourceType": "com.awesomecopilot.boot.security.props.CopilotSecurityProperties",
+      "defaultValue": "\/logout"
+    },
+    {
+      "name": "copilot.security.max-retries",
+      "type": "java.lang.Integer",
+      "description": "登录失败允许的重试次数, 默认5次",
+      "sourceType": "com.awesomecopilot.boot.security.props.CopilotSecurityProperties",
+      "defaultValue": 5
+    },
+    {
+      "name": "copilot.security.password-encrypted",
+      "type": "java.lang.Boolean",
+      "description": "表单登录时, 传输的密码是否RSA公钥加密传输",
+      "sourceType": "com.awesomecopilot.boot.security.props.CopilotSecurityProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "copilot.security.pic-code.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否要集成验证码功能, 访问URL \/pic-code",
+      "sourceType": "com.awesomecopilot.boot.security.props.CopilotSecurityProperties$PicCode",
+      "defaultValue": false
+    },
+    {
+      "name": "copilot.security.pic-code.ttl",
+      "type": "java.lang.Long",
+      "description": "图片验证码多久过期, 默认5分钟",
+      "sourceType": "com.awesomecopilot.boot.security.props.CopilotSecurityProperties$PicCode",
+      "defaultValue": 5
+    },
+    {
+      "name": "copilot.security.rate-limit",
+      "type": "java.lang.Boolean",
+      "description": "是否要对应用限流, 开启@RateLimit注解支持",
+      "sourceType": "com.awesomecopilot.boot.security.props.CopilotSecurityProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "copilot.security.role-prefix",
+      "type": "java.lang.String",
+      "description": "Spring Security的RoleVoter在投票的时候, 会检查@Secured(\"ROLE_ADMIN\")等注解上是否写了ROLE_前缀<p> 如果不想要加ROLE_前缀或者想配置另外一个前缀, 可以通过这个配置项来指定",
+      "sourceType": "com.awesomecopilot.boot.security.props.CopilotSecurityProperties",
+      "defaultValue": "ROLE_"
+    },
+    {
+      "name": "copilot.security.token-encrypted",
+      "type": "java.lang.Boolean",
+      "description": "Token是否加密处理过<p> 客户端将请求的URI, access_toen, 客户端当前的timestamp用公钥加密, 将加密后的字符串作为access_token传递过来<p> 先组合成这样一个字符串 uri=\/saleOrder\/search&access_token=dHDG13ms4868gFNfuk&timestamp=123128371823<p> 再对这个字符串做RSA公钥加密, 加密后作为Authorization请求头传入, 同时请求的URL后面要加上timestamp=123128371823参数",
+      "sourceType": "com.awesomecopilot.boot.security.props.CopilotSecurityProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "copilot.security.white-list",
+      "type": "java.util.List<java.lang.String>",
+      "description": "指定的URI可以匿名访问",
+      "sourceType": "com.awesomecopilot.boot.security.props.CopilotSecurityProperties"
+    },
+    {
+      "name": "copilot.xss.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否要开启抗XSS攻击, 默认false",
+      "sourceType": "com.awesomecopilot.boot.security.props.CopilotXSSProperties",
+      "defaultValue": false
+    }
+  ],
+  "hints": []
+}

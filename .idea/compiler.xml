@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="copilot-spring-boot-oauth2-starter" />
+        <module name="copilot-spring-boot-es-starter" />
+        <module name="copilot-cloud-gateway-starter" />
+        <module name="copilot-spring-boot-oauth2" />
+        <module name="copilot-spring-cloud" />
+        <module name="copilot-cloud-gateway" />
+        <module name="copilot-spring-boot-security" />
+        <module name="copilot-spring-boot-security-starter" />
+        <module name="copilot-spring-boot-webflux" />
+        <module name="copilot-spring-cloud-starter" />
+        <module name="copilot-spring-boot-web-starter" />
+        <module name="copilot-spring-boot" />
+        <module name="copilot-spring-boot-starter" />
+        <module name="copilot-spring-boot-web" />
+      </profile>
+    </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="copilot-cloud-gateway" options="-parameters" />
+      <module name="copilot-cloud-gateway-starter" options="-parameters" />
+      <module name="copilot-spring-boot" options="-parameters" />
+      <module name="copilot-spring-boot-es-starter" options="-parameters" />
+      <module name="copilot-spring-boot-oauth2" options="-parameters" />
+      <module name="copilot-spring-boot-oauth2-starter" options="-parameters" />
+      <module name="copilot-spring-boot-security" options="-parameters" />
+      <module name="copilot-spring-boot-security-starter" options="-parameters" />
+      <module name="copilot-spring-boot-starter" options="-parameters" />
+      <module name="copilot-spring-boot-web" options="-parameters" />
+      <module name="copilot-spring-boot-web-starter" options="-parameters" />
+      <module name="copilot-spring-boot-webflux" options="-parameters" />
+      <module name="copilot-spring-cloud" options="-parameters" />
+      <module name="copilot-spring-cloud-starter" options="-parameters" />
+    </option>
+  </component>
+</project>
