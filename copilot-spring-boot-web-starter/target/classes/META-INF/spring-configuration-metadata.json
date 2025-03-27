@@ -6,11 +6,6 @@
       "sourceType": "com.awesomecopilot.boot.web.autoconfig.CopilotFilterProperties"
     },
     {
-      "name": "copilot.idemtotent",
-      "type": "com.awesomecopilot.boot.web.autoconfig.IdemtotentProperties",
-      "sourceType": "com.awesomecopilot.boot.web.autoconfig.IdemtotentProperties"
-    },
-    {
       "name": "copilot.locale",
       "type": "com.awesomecopilot.boot.web.autoconfig.LocaleProperties",
       "sourceType": "com.awesomecopilot.boot.web.autoconfig.LocaleProperties"
@@ -33,13 +28,6 @@
       "description": "是否注册HttpServletRequestRepeatedReadFilter, 以开启重复读取RequestBody功能",
       "sourceType": "com.awesomecopilot.boot.web.autoconfig.CopilotFilterProperties",
       "defaultValue": false
-    },
-    {
-      "name": "copilot.idemtotent.enabled",
-      "type": "java.lang.Boolean",
-      "description": "是否启用接口幂等性控制, 默认true",
-      "sourceType": "com.awesomecopilot.boot.web.autoconfig.IdemtotentProperties",
-      "defaultValue": true
     },
     {
       "name": "copilot.locale.cookie-name",

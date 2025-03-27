@@ -1,4 +1,9 @@
-# 一 接口幂等性
+# 一 接口幂等性@Idempotent
+
+* 在需要做接口幂等性的接口方法上添加@Idempotent注解
+* 调用方的feign要加上这个拦截器 com.awesomecopilot.cloud.feign.interceptor.IdempotentInterceptor 以填充Idempotent请求头到Header中
+* 处理@Idempotent注解的是IdempotentAspect
+* 加了@Idempotent注解的微服务要在application.yaml中配置 copilot.idemtotent.enabled: true, 否则不会生效, 这个配置项的作用是配置bean: IdempotentAspect
 
 目前基于Redis的Hyperloglog来实现, 开启开关:
 

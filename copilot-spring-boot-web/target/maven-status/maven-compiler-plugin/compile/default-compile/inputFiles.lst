@@ -5,7 +5,6 @@ D:\Learning\copilot-starter\copilot-spring-boot-web\src\main\java\com\awesomecop
 D:\Learning\copilot-starter\copilot-spring-boot-web\src\main\java\com\awesomecopilot\boot\web\autoconfig\CopilotWebsocketAutoConfiguration.java
 D:\Learning\copilot-starter\copilot-spring-boot-web\src\main\java\com\awesomecopilot\boot\web\intercepter\IdempotentIntercepter.java
 D:\Learning\copilot-starter\copilot-spring-boot-web\src\main\java\com\awesomecopilot\boot\web\websocket\WebSocketFilter.java
-D:\Learning\copilot-starter\copilot-spring-boot-web\src\main\java\com\awesomecopilot\boot\web\autoconfig\IdemtotentProperties.java
 D:\Learning\copilot-starter\copilot-spring-boot-web\src\main\java\com\awesomecopilot\boot\web\controller\IdempotentTokenController.java
 D:\Learning\copilot-starter\copilot-spring-boot-web\src\main\java\com\awesomecopilot\boot\web\autoconfig\CopilotMvcProperties.java
 D:\Learning\copilot-starter\copilot-spring-boot-web\src\main\java\com\awesomecopilot\boot\web\autoconfig\CopilotFilterProperties.java

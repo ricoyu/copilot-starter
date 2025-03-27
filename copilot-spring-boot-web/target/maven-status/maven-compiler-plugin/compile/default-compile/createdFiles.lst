@@ -2,7 +2,6 @@ com\awesomecopilot\boot\web\autoconfig\CopilotWebsocketAutoConfiguration.class
 com\awesomecopilot\boot\web\autoconfig\CopilotMvcConfiguration.class
 com\awesomecopilot\boot\web\controller\IdempotentTokenController.class
 com\awesomecopilot\boot\web\intercepter\IdempotentIntercepter.class
-com\awesomecopilot\boot\web\autoconfig\IdemtotentProperties.class
 com\awesomecopilot\boot\web\autoconfig\CopilotLocaleConfiguration.class
 com\awesomecopilot\boot\web\autoconfig\LocaleProperties.class
 com\awesomecopilot\boot\web\autoconfig\CopilotMvcProperties.class

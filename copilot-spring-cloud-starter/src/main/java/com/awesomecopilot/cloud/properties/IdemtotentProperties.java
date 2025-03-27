@@ -1,6 +1,5 @@
 package com.awesomecopilot.cloud.properties;
 
-import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -13,7 +12,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @author Rico Yu ricoyu520@gmail.com
  * @version 1.0
  */
-@Data
 @ConfigurationProperties(prefix = "copilot.idemtotent")
 public class IdemtotentProperties {
 	
@@ -21,4 +19,12 @@ public class IdemtotentProperties {
 	 * 是否启用接口幂等性控制, 默认true
 	 */
 	private boolean enabled = true;
+
+	public boolean isEnabled() {
+		return enabled;
+	}
+
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
 }

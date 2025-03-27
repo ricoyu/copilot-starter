@@ -1,4 +1,3 @@
-D:\Learning\copilot-starter\copilot-spring-boot-web-starter\src\main\java\com\awesomecopilot\boot\web\annotation\Idempotent.java
 D:\Learning\copilot-starter\copilot-spring-boot-web-starter\src\main\java\com\awesomecopilot\boot\web\autoconfig\CopilotFilterProperties.java
 D:\Learning\copilot-starter\copilot-spring-boot-web-starter\src\main\java\com\awesomecopilot\boot\web\autoconfig\CopilotThreadAutoConfiguration.java
 D:\Learning\copilot-starter\copilot-spring-boot-web-starter\src\main\java\com\awesomecopilot\boot\web\annotation\RateLimit.java
@@ -9,10 +8,8 @@ D:\Learning\copilot-starter\copilot-spring-boot-web-starter\src\main\java\com\aw
 D:\Learning\copilot-starter\copilot-spring-boot-web-starter\src\main\java\com\awesomecopilot\boot\web\autoconfig\CopilotMvcProperties.java
 D:\Learning\copilot-starter\copilot-spring-boot-web-starter\src\main\java\com\awesomecopilot\boot\web\autoconfig\LocaleProperties.java
 D:\Learning\copilot-starter\copilot-spring-boot-web-starter\src\main\java\com\awesomecopilot\boot\web\autoconfig\CopilotWebAutoConfig.java
-D:\Learning\copilot-starter\copilot-spring-boot-web-starter\src\main\java\com\awesomecopilot\boot\web\autoconfig\IdemtotentProperties.java
 D:\Learning\copilot-starter\copilot-spring-boot-web-starter\src\main\java\com\awesomecopilot\boot\web\handler\RateLimitHandler.java
 D:\Learning\copilot-starter\copilot-spring-boot-web-starter\src\main\java\com\awesomecopilot\boot\web\websocket\WebSocketFilter.java
 D:\Learning\copilot-starter\copilot-spring-boot-web-starter\src\main\java\com\awesomecopilot\boot\web\autoconfig\CopilotMvcConfiguration.java
 D:\Learning\copilot-starter\copilot-spring-boot-web-starter\src\main\java\com\awesomecopilot\boot\web\autoconfig\CopilotWebsocketAutoConfiguration.java
 D:\Learning\copilot-starter\copilot-spring-boot-web-starter\src\main\java\com\awesomecopilot\boot\web\autoconfig\CopilotWebsocketProperties.java
-D:\Learning\copilot-starter\copilot-spring-boot-web-starter\src\main\java\com\awesomecopilot\boot\web\intercepter\IdempotentIntercepter.java

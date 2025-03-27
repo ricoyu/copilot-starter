@@ -52,7 +52,7 @@ import static org.springframework.boot.autoconfigure.condition.ConditionalOnWebA
  */
 @Configuration
 @ConditionalOnWebApplication(type = SERVLET)
-@EnableConfigurationProperties({CopilotFilterProperties.class, CopilotMvcProperties.class, IdemtotentProperties.class})
+@EnableConfigurationProperties({CopilotFilterProperties.class, CopilotMvcProperties.class})
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class CopilotMvcConfiguration implements WebMvcConfigurer {
 
