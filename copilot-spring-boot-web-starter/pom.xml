@@ -16,11 +16,11 @@
     </properties>
 
     <dependencies>
-        <!--<dependency>
+        <dependency>
             <groupId>com.awesomecopilot</groupId>
             <artifactId>copilot-spring-boot-web</artifactId>
             <version>${project.parent.version}</version>
-        </dependency>-->
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>

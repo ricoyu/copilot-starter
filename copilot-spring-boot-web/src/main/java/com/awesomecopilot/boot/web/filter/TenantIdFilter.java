@@ -34,12 +34,12 @@ public class TenantIdFilter extends OncePerRequestFilter {
 
 		// 从请求头获取 Tenant-Id
 		String tenantId = request.getHeader("Tenant-Id");
+		// 将 Tenant-Id 存入 ThreadLocal
+		ThreadContext.put("tenantId", Long.parseLong(tenantId));
 		if (log.isDebugEnabled()) {
 			log.debug("Tenant-Id: {}", tenantId);
 		}
 
-		// 将 Tenant-Id 存入 ThreadLocal
-		ThreadContext.put("tenantId", tenantId);
 
 		// 继续执行后续过滤器/Controller
 		filterChain.doFilter(request, response);

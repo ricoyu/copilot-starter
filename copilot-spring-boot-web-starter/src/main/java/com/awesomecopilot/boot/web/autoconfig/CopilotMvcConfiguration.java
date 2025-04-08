@@ -1,6 +1,7 @@
 package com.awesomecopilot.boot.web.autoconfig;
 
 import com.awesomecopilot.boot.web.filter.TenantIdFilter;
+import com.awesomecopilot.boot.web.intercepter.IdempotentIntercepter;
 import com.awesomecopilot.web.advice.GlobalBindingAdvice;
 import com.awesomecopilot.web.advice.RestExceptionAdvice;
 import com.awesomecopilot.web.context.support.CustomConversionServiceFactoryBean;
@@ -181,6 +182,7 @@ public class CopilotMvcConfiguration implements WebMvcConfigurer {
 	
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
+		registry.addInterceptor(new IdempotentIntercepter());
 		//基于token的幂等性保证
 		WebMvcConfigurer.super.addInterceptors(registry);
 	}
