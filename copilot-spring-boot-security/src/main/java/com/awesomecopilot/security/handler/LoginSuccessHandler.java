@@ -164,7 +164,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 			expires = loginDurationService.expiresInMinutes(username);
 		}
 		AuthUtils.login(username, accessToken, expires, TimeUnit.MINUTES, userDetails, authorities, loginInfo, singleSignOn);
-		Result result = Results.success().result(accessToken);
+		Result result = Results.success().data(accessToken).build();
 		RestUtils.writeJson(response, result);
 		
 		//登录成功后把之前登录失败的次数清零

@@ -55,7 +55,7 @@ public class VerifyCodeController {
 		results.put(SecurityConstants.VERIFY_CODE_ID, codeId);
 		results.put(SecurityConstants.VERIFY_CODE, base64Encoded);
 		
-		return Results.success().result(results);
+		return Results.success().data(results).build();
 	}
 	
 }

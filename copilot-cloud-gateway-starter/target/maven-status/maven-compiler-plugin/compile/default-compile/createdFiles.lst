@@ -1,8 +1,0 @@
-com\awesomecopilot\cloud\autoconfig\CopilotGatewayFilterAutoConfiguration.class
-com\awesomecopilot\cloud\autoconfig\CopilotGatewayAuthAutoConfiguration.class
-com\awesomecopilot\cloud\autoconfig\CopilotGatewayAutoConfiguration.class
-com\awesomecopilot\cloud\autoconfig\CopilotGatewayPredicateAutoConfiguration.class
-com\awesomecopilot\cloud\autoconfig\CopilotGatewayProperties.class
-com\awesomecopilot\cloud\autoconfig\CopilotSentinelGatewayAutoConfig.class
-com\awesomecopilot\cloud\autoconfig\CopilotExceptionAutoConfiguration.class
-META-INF\spring-configuration-metadata.json

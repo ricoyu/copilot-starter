@@ -21,6 +21,6 @@ public class RsaController {
 	
 	@GetMapping("/public-key")
 	public Result publicKey() {
-		return Results.success().result(RsaUtils.publicKeyStr());
+		return Results.success().data(RsaUtils.publicKeyStr()).build();
 	}
 }

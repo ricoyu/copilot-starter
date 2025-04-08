@@ -248,7 +248,7 @@ public class HttpMessageConverterAutoConfiguration implements WebMvcConfigurer {
 
 在请求进来前已经处理完毕后清理ThreadLocal, 避免内存泄漏
 
-在CopilotThreadAutoConfiguration里面注册了ThreadLocalCleanupListener
+在CopilotThreadAutoConfiguration里面注册了ThreadLocalCleanupListener, 默认就注册了
 
 
 
@@ -276,3 +276,25 @@ copilot.idemtotent.enabled=true
 请求 /idempotent-token  拿到幂等性token, 塞到Idempotent-Token这个Header中
 
 IdempotentIntercepter会对加了@Idempotent注解的接口进行幂等性检查
+
+
+
+# 十 全局异常处理
+
+```yaml
+copilot:
+  mvc:
+    rest-exception-advice-enabled: true
+```
+
+这个默认就是true, 所以默认不需要配置, 想要关闭的时候配置为false
+
+# 十一 可重复读取RequestBody
+
+配置
+
+```yaml
+copilot.filter.repeated-read: true
+```
+
+开启在同一个Controller方法多次读取RequestBody, 即可以用多个@RequestBody将RequestBody中的数据绑定到bean中

@@ -1,4 +1,0 @@
-com\awesomecopilot\boot\annotation\processor\RedisListenerProcessor.class
-com\awesomecopilot\boot\annotation\RedisListener.class
-com\awesomecopilot\boot\enums\SystemError.class
-com\awesomecopilot\boot\converter\LocalTimeConverter.class

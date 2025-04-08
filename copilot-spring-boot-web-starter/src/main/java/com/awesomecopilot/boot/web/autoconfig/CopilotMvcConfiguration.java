@@ -1,5 +1,6 @@
 package com.awesomecopilot.boot.web.autoconfig;
 
+import com.awesomecopilot.boot.web.filter.TenantIdFilter;
 import com.awesomecopilot.web.advice.GlobalBindingAdvice;
 import com.awesomecopilot.web.advice.RestExceptionAdvice;
 import com.awesomecopilot.web.context.support.CustomConversionServiceFactoryBean;
@@ -101,6 +102,15 @@ public class CopilotMvcConfiguration implements WebMvcConfigurer {
 		filter.setForceEncoding(true);
 		filter.setOrder(Ordered.HIGHEST_PRECEDENCE);
 		return filter;
+	}
+
+	@Bean
+	public FilterRegistrationBean<TenantIdFilter> tenantIdFilterRegistration() {
+		FilterRegistrationBean<TenantIdFilter> registration = new FilterRegistrationBean<>();
+		registration.setFilter(new TenantIdFilter());
+		registration.addUrlPatterns("/*"); // 拦截所有请求
+		registration.setOrder(1); // 设置优先级（数值越小优先级越高）
+		return registration;
 	}
 	
 	@Bean

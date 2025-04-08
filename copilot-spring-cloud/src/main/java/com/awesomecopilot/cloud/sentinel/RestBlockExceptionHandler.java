@@ -10,7 +10,6 @@ import com.alibaba.csp.sentinel.slots.system.SystemBlockException;
 import com.awesomecopilot.json.jackson.JacksonUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -44,8 +43,9 @@ import static org.apache.commons.lang3.StringUtils.trim;
  * @author Rico Yu ricoyu520@gmail.com
  * @version 1.0
  */
-@Slf4j
 public class RestBlockExceptionHandler implements BlockExceptionHandler {
+
+	private static Logger log = LoggerFactory.getLogger(RestBlockExceptionHandler.class);
 	
 	@Override
 	public void handle(HttpServletRequest request, HttpServletResponse response, BlockException e) throws Exception {

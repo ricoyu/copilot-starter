@@ -32,10 +32,10 @@ import static org.springframework.boot.autoconfigure.condition.ConditionalOnWebA
 @Configuration
 @ConditionalOnWebApplication(type = SERVLET)
 public class HttpMessageConverterAutoConfiguration implements WebMvcConfigurer {
-	
+
 	@Autowired
 	private ObjectMapper objectMapper;
-	
+
 	@Bean
 	public MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter() {
 		MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter = new MappingJackson2HttpMessageConverter();
@@ -47,7 +47,7 @@ public class HttpMessageConverterAutoConfiguration implements WebMvcConfigurer {
 		mappingJackson2HttpMessageConverter.setObjectMapper(objectMapper);
 		return mappingJackson2HttpMessageConverter;
 	}
-	
+
 	@Override
 	public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
 		List<MediaType> list = new ArrayList<MediaType>();
@@ -56,7 +56,7 @@ public class HttpMessageConverterAutoConfiguration implements WebMvcConfigurer {
 		MappingJackson2HttpMessageConverter messageConverter = mappingJackson2HttpMessageConverter();
 		messageConverter.setSupportedMediaTypes(list);
 		converters.add(0, messageConverter);
-		
+
 		/*
 		 * 添加这个是处理在返回String类型的结果时, 多了一个双引号问题
 		 */
