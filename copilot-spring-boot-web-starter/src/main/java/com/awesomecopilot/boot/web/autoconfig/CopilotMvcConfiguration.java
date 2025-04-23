@@ -13,6 +13,7 @@ import com.awesomecopilot.web.resolver.LocalDateTimeArgumentResolver;
 import com.awesomecopilot.web.resolver.LocalTimeArgumentResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -59,6 +60,9 @@ import static org.springframework.boot.autoconfigure.condition.ConditionalOnWebA
 public class CopilotMvcConfiguration implements WebMvcConfigurer {
 
 	private Logger log = LoggerFactory.getLogger(CopilotMvcConfiguration.class);
+
+	@Value("${copilot.filter.tenant.mandatory:false}")
+	private boolean tenantIdMandatory=false;
 
 	/**
 	 * 支持Controller方法参数里面日期类型的绑定
@@ -108,7 +112,7 @@ public class CopilotMvcConfiguration implements WebMvcConfigurer {
 	@Bean
 	public FilterRegistrationBean<TenantIdFilter> tenantIdFilterRegistration() {
 		FilterRegistrationBean<TenantIdFilter> registration = new FilterRegistrationBean<>();
-		registration.setFilter(new TenantIdFilter());
+		registration.setFilter(new TenantIdFilter(tenantIdMandatory));
 		registration.addUrlPatterns("/*"); // 拦截所有请求
 		registration.setOrder(1); // 设置优先级（数值越小优先级越高）
 		return registration;

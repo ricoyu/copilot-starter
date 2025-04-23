@@ -3,6 +3,7 @@ package com.awesomecopilot.cloud.autoconfig;
 import com.alibaba.csp.sentinel.annotation.aspectj.SentinelResourceAspect;
 import com.awesomecopilot.cloud.feign.aspect.IdempotentAspect;
 import com.awesomecopilot.cloud.feign.interceptor.IdempotentInterceptor;
+import com.awesomecopilot.cloud.feign.interceptor.TenantIdInterceptor;
 import com.awesomecopilot.cloud.properties.IdemtotentProperties;
 import com.awesomecopilot.cloud.properties.SentinelProperties;
 import com.awesomecopilot.cloud.sentinel.RestBlockExceptionHandler;
@@ -82,6 +83,16 @@ public class CopilotSpringCloudAutoConfiguration {
 	@ConditionalOnProperty(name = "copilot.sentinel.sentinel-auth-enabled", havingValue = "true", matchIfMissing = false)
 	public SentinelAuthRequestOriginParser requestOriginParser() {
 		return new SentinelAuthRequestOriginParser();
+	}
+
+	/**
+	 * 用于在feign调用的时候传递请求头中的租户ID
+	 * @return
+	 */
+	@Bean
+	@ConditionalOnMissingBean(TenantIdInterceptor.class)
+	public TenantIdInterceptor tenantIdInterceptor() {
+		return new TenantIdInterceptor();
 	}
 
 }

@@ -298,3 +298,25 @@ copilot.filter.repeated-read: true
 ```
 
 开启在同一个Controller方法多次读取RequestBody, 即可以用多个@RequestBody将RequestBody中的数据绑定到bean中
+
+
+
+# 十二 多租户支持
+
+```
+copilot:
+  filter:
+    tenant:
+      mandatory: false
+```
+
+是否要求必须携带Tenant-Id请求头, 默认false, 如果是true, 不包含Tenant-Id请求头会报错
+
+```json
+{
+    "code": "4006",
+    "status": "fail",
+    "message": "请提供租户ID"
+}
+```
+

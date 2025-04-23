@@ -1,6 +1,7 @@
 package com.awesomecopilot.boot.web.autoconfig;
 
 import com.awesomecopilot.boot.web.autoconfig.properties.CopilotJacksonProperties;
+import com.awesomecopilot.boot.web.autoconfig.properties.CopilotOrmProperties;
 import com.awesomecopilot.boot.web.autoconfig.properties.CopilotProperties;
 import com.awesomecopilot.common.spring.annotation.processor.PostInitializeGroupOrderedBeanProcessor;
 import com.awesomecopilot.common.spring.context.ApplicationContextHolder;
@@ -27,7 +28,7 @@ import java.util.TimeZone;
  * @author Rico Yu ricoyu520@gmail.com
  * @version 1.0
  */
-@EnableConfigurationProperties({CopilotProperties.class, CopilotJacksonProperties.class})
+@EnableConfigurationProperties({CopilotProperties.class, CopilotJacksonProperties.class, CopilotOrmProperties.class})
 @Configuration
 public class CopilotAutoConfiguration {
 

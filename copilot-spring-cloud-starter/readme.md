@@ -44,7 +44,7 @@ loser.idemtotent.enabled=true
 开启开关, 这是默认就开启的, 要关闭设为false即可
 
 ```yaml
-loser:
+copilot:
   sentinel:
     enabled: true
 ```
@@ -64,7 +64,36 @@ Sentinel注册了一个AbstractSentinelInterceptor, 这是实现了Spring MVC的
 application.yaml配置项
 
 ```yaml
-loser.sentinel.rest-exception-enabled: true
+copilot.sentinel.rest-exception-enabled: true
 ```
 
 控制是否要对流控异常做统一异常处理
+
+
+
+# 四 租户ID
+
+CopilotSpringCloudAutoConfiguration里面配置了全局的TenantIdInterceptor, 不需要手工配置, 对所有Feign客户端生效, 从当前请求头中拿Tenant-Id, 如果有的话塞到Feign的请求头中传递下去, 因为这个只是检查一下有没有, 有的话传递下去, 所以不需要开关, 默认开启就是了
+
+```java
+/**
+ * 用于在feign调用的时候传递请求头中的租户ID
+ * @return
+ */
+@Bean
+@ConditionalOnMissingBean(TenantIdInterceptor.class)
+public TenantIdInterceptor tenantIdInterceptor() {
+  return new TenantIdInterceptor();
+}
+```
+
+配合
+
+```yaml
+copilot:
+  filter:
+    tenant:
+      mandatory: true
+```
+
+达到强制传TenantId的效果

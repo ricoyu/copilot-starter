@@ -72,7 +72,7 @@
 
 # 三 @PostInitialize注解支持
 
-Spring官方的@PostConstruct也可以在容器启动后自动执行指定方法, 但此时Spring事务还未准备好, 而@PostInitialize可以在Spring的事务一键完全Ready的情况下自动运行
+Spring官方的@PostConstruct也可以在容器启动后自动执行指定方法, 但此时Spring事务还未准备好, 而@PostInitialize可以在Spring的事务已经完全Ready的情况下自动运行
 
 # 四 日期转换
 
