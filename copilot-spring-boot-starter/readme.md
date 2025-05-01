@@ -89,3 +89,18 @@ spring.main.allow-circular-references=true
 ```
 
 使得SpringBoot应用跟以前一样, 默认可以自动解决循环依赖问题
+
+
+
+# 六 ApplicationContextHolder
+
+自动配置了ApplicationContextHolder, 在应用里面要访问Spring的ApplicationContext可以这样:
+
+```java
+(LocaleResolver) ApplicationContextHolder.getBean("localeResolver")
+```
+
+```java
+CopilotFilterProperties properties = (CopilotFilterProperties) ApplicationContextHolder.getBean(CopilotFilterProperties.class);
+```
+

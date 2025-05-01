@@ -96,6 +96,9 @@ public class TenantIdFilter extends OncePerRequestFilter {
 	 * 简单的路径匹配方法，支持 * 通配符
 	 */
 	private boolean pathMatches(String path, String pattern) {
+		if (!pattern.startsWith("/")) {
+			pattern = "/" + pattern;
+		}
 		if (pattern.endsWith("**")) {
 			String basePattern = pattern.substring(0, pattern.length() - 2);
 			return path.startsWith(basePattern);

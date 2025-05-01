@@ -46,7 +46,7 @@ Controller方法参数是enum类型的话, 传的字符串参数要大写, 与en
 .w.s.m.s.DefaultHandlerExceptionResolver L199  : Resolved [org.springframework.web.method.annotation.MethodArgumentTypeMismatchException: Failed to convert value of type 'java.lang.String' to required type 'com.loserico.cloud.enums.OrderType'; nested exception is org.springframework.core.convert.ConversionFailedException: Failed to convert from type [java.lang.String] to type [com.loserico.cloud.enums.OrderType] for value 'sec_kill'; nested exception is java.lang.IllegalArgumentException: No enum constant com.loserico.cloud.enums.OrderType.sec_kill]
 ```
 
-LoserMvcConfiguration实现了WebMvcConfigurer接口, 通过override #addFormatters 方法像Spring MVC 注入一个自定义的GenericEnumConverter以支持Controller方法Enum类型大小写不敏感的绑定, 并且默认配置了可以按Enum对象的自定义属性code或者desc来绑定, 配置如下:
+LoserMvcConfiguration实现了WebMvcConfigurer接口, 通过override #addFormatters 方法向Spring MVC 注入一个自定义的GenericEnumConverter以支持Controller方法Enum类型大小写不敏感的绑定, 并且默认配置了可以按Enum对象的自定义属性code或者desc来绑定, 配置如下:
 
 ```java
 @Override
@@ -215,7 +215,7 @@ public class HttpMessageConverterAutoConfiguration implements WebMvcConfigurer {
 
 # 五 自动配置Encoding
 
-1. LoserMvcConfiguration会自动配置CharacterEncodingFilter, 字符编码设为UTF-8, 但是请注意, 这个CharacterEncodingFilter堆下面这种Controller是无效的, 返回的还是乱码
+1. LoserMvcConfiguration会自动配置CharacterEncodingFilter, 字符编码设为UTF-8, 但是请注意, 这个CharacterEncodingFilter对下面这种Controller是无效的, 返回的还是乱码
 
    ```java
    @CrossOrigin()
@@ -235,7 +235,7 @@ public class HttpMessageConverterAutoConfiguration implements WebMvcConfigurer {
    mediaTypes.add(MediaType.TEXT_PLAIN);
    mediaTypes.add(MediaType.APPLICATION_JSON_UTF8);
    mediaTypes.add(MediaType.APPLICATION_JSON);
-   //构造函数必须传默认编码, 不然返回字符串带中文的湖乱码
+   //构造函数必须传默认编码, 不然返回字符串带中文的会乱码
    StringHttpMessageConverter stringHttpMessageConverter = new StringHttpMessageConverter(UTF_8);
    stringHttpMessageConverter.setSupportedMediaTypes(mediaTypes);
    converters.add(0, stringHttpMessageConverter);
