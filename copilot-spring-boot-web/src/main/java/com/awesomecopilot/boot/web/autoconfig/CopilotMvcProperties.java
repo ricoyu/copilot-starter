@@ -1,6 +1,5 @@
 package com.awesomecopilot.boot.web.autoconfig;
 
-import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -13,7 +12,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @author Rico Yu ricoyu520@gmail.com
  * @version 1.0
  */
-@Data
 @ConfigurationProperties(prefix = "copilot.mvc")
 public class CopilotMvcProperties {
 	
@@ -24,4 +22,19 @@ public class CopilotMvcProperties {
 
 	private boolean restExceptionAdviceEnabled = true;
 
+	public Integer getIdemtotentTokenTtl() {
+		return idemtotentTokenTtl;
+	}
+
+	public void setIdemtotentTokenTtl(Integer idemtotentTokenTtl) {
+		this.idemtotentTokenTtl = idemtotentTokenTtl;
+	}
+
+	public boolean isRestExceptionAdviceEnabled() {
+		return restExceptionAdviceEnabled;
+	}
+
+	public void setRestExceptionAdviceEnabled(boolean restExceptionAdviceEnabled) {
+		this.restExceptionAdviceEnabled = restExceptionAdviceEnabled;
+	}
 }

@@ -12,7 +12,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @author Rico Yu ricoyu520@gmail.com
  * @version 1.0
  */
-@ConfigurationProperties(prefix = "copilot.idemtotent")
+@ConfigurationProperties(prefix = "copilot.idempotent")
 public class IdemtotentProperties {
 	
 	/**

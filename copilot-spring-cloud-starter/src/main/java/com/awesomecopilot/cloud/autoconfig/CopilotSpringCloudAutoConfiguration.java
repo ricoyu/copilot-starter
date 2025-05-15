@@ -4,10 +4,11 @@ import com.alibaba.csp.sentinel.annotation.aspectj.SentinelResourceAspect;
 import com.awesomecopilot.cloud.feign.aspect.IdempotentAspect;
 import com.awesomecopilot.cloud.feign.interceptor.IdempotentInterceptor;
 import com.awesomecopilot.cloud.feign.interceptor.TenantIdInterceptor;
+import com.awesomecopilot.cloud.origin.CopilotOriginParser;
 import com.awesomecopilot.cloud.properties.IdemtotentProperties;
 import com.awesomecopilot.cloud.properties.SentinelProperties;
 import com.awesomecopilot.cloud.sentinel.RestBlockExceptionHandler;
-import com.awesomecopilot.cloud.sentinel.auth.SentinelAuthRequestOriginParser;
+import com.awesomecopilot.cloud.sentinel.auth.AuthFlowInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -50,7 +51,7 @@ public class CopilotSpringCloudAutoConfiguration {
 	 * @return
 	 */
 	@Bean
-	@ConditionalOnProperty(name = "copilot.idemtotent.enabled", havingValue = "true", matchIfMissing = false)
+	@ConditionalOnProperty(name = "copilot.idempotent.enabled", havingValue = "true", matchIfMissing = false)
 	public IdempotentInterceptor idempotentInterceptor() {
 		return new IdempotentInterceptor();
 	}
@@ -64,25 +65,12 @@ public class CopilotSpringCloudAutoConfiguration {
 	public IdempotentAspect idempotentAspect() {
 		return new IdempotentAspect();
 	}
-	
-	@Bean
-	@ConditionalOnProperty(name = "copilot.sentinel.rest-exception-enabled", havingValue = "true", matchIfMissing = true)
-	public RestBlockExceptionHandler restBlockExceptionHandler() {
-		return new RestBlockExceptionHandler();
-	}
-	
+
 	@Bean
 	@ConditionalOnProperty(name = "copilot.sentinel.enabled", havingValue = "true", matchIfMissing = true)
 	@ConditionalOnMissingBean(SentinelResourceAspect.class)
 	public SentinelResourceAspect sentinelResourceAspect() {
 		return new SentinelResourceAspect();
-	}
-
-	@Bean
-	@ConditionalOnMissingBean(SentinelAuthRequestOriginParser.class)
-	@ConditionalOnProperty(name = "copilot.sentinel.sentinel-auth-enabled", havingValue = "true", matchIfMissing = false)
-	public SentinelAuthRequestOriginParser requestOriginParser() {
-		return new SentinelAuthRequestOriginParser();
 	}
 
 	/**
@@ -95,4 +83,21 @@ public class CopilotSpringCloudAutoConfiguration {
 		return new TenantIdInterceptor();
 	}
 
+	@Bean
+	@ConditionalOnProperty(name = "copilot.sentinel.rest-exception-enabled", havingValue = "true", matchIfMissing = true)
+	public RestBlockExceptionHandler restBlockExceptionHandler() {
+		return new RestBlockExceptionHandler();
+	}
+
+	@Bean
+	@ConditionalOnProperty(name = "copilot.sentinel.auth-rule.enabled", havingValue = "true", matchIfMissing = true)
+	public CopilotOriginParser originParser() {
+		return new CopilotOriginParser();
+	}
+
+	@Bean
+	@ConditionalOnProperty(name = "copilot.sentinel.auth-rule.enabled", havingValue = "true", matchIfMissing = true)
+	public AuthFlowInterceptor authFlowInterceptor() {
+		return new AuthFlowInterceptor();
+	}
 }

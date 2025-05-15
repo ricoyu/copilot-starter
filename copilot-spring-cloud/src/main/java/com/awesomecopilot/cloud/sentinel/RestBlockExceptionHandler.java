@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
@@ -45,7 +46,10 @@ import static org.apache.commons.lang3.StringUtils.trim;
  */
 public class RestBlockExceptionHandler implements BlockExceptionHandler {
 
-	private static Logger log = LoggerFactory.getLogger(RestBlockExceptionHandler.class);
+	private static final Logger log = LoggerFactory.getLogger(RestBlockExceptionHandler.class);
+
+	@Value("${spring.application.name}")
+	private String appName;
 	
 	@Override
 	public void handle(HttpServletRequest request, HttpServletResponse response, BlockException e) throws Exception {
@@ -53,23 +57,28 @@ public class RestBlockExceptionHandler implements BlockExceptionHandler {
 		if (e instanceof FlowException) {
 			log.warn(FLOW_EXCEPTION.message());
 			params.put("code", FLOW_EXCEPTION.code());
-			params.put("desc", FLOW_EXCEPTION.message());
+			params.put("status", "fail");
+			params.put("message", appName +" "+FLOW_EXCEPTION.message());
 		} else if (e instanceof DegradeException) {
 			log.warn(DEGRADE_EXCEPTION.message());
 			params.put("code", DEGRADE_EXCEPTION.code());
-			params.put("desc", DEGRADE_EXCEPTION.message());
+			params.put("status", "fail");
+			params.put("message", appName +" "+DEGRADE_EXCEPTION.message());
 		} else if (e instanceof AuthorityException) {
 			log.warn(AUTHORITY_BLOCK_EXCEPTION.message());
 			params.put("code", AUTHORITY_BLOCK_EXCEPTION.code());
-			params.put("desc", AUTHORITY_BLOCK_EXCEPTION.message());
+			params.put("status", "fail");
+			params.put("message", appName +" "+AUTHORITY_BLOCK_EXCEPTION.message());
 		} else if (e instanceof ParamFlowException) {
 			log.warn(HOT_PARAM_BLOCK_EXCEPTION.message());
 			params.put("code", HOT_PARAM_BLOCK_EXCEPTION.code());
-			params.put("desc", HOT_PARAM_BLOCK_EXCEPTION.message());
+			params.put("status", "fail");
+			params.put("message", appName +" "+HOT_PARAM_BLOCK_EXCEPTION.message());
 		} else if (e instanceof SystemBlockException) {
 			log.warn(SYSTEM_BLOCK_EXCEPTION.message());
 			params.put("code", SYSTEM_BLOCK_EXCEPTION.code());
-			params.put("desc", SYSTEM_BLOCK_EXCEPTION.message());
+			params.put("status", "fail");
+			params.put("message", appName +" "+SYSTEM_BLOCK_EXCEPTION.message());
 		}
 		
 		HttpServletResponse httpServletResponse = (HttpServletResponse) response;

@@ -1,0 +1,5 @@
+com.awesomecopilot.gateway.autoconfig.CopilotGatewayPredicateAutoConfiguration
+com.awesomecopilot.gateway.autoconfig.CopilotGatewayFilterAutoConfiguration
+com.awesomecopilot.gateway.autoconfig.CopilotGatewayAutoConfiguration
+com.awesomecopilot.gateway.autoconfig.CopilotExceptionAutoConfiguration
+com.awesomecopilot.gateway.autoconfig.CopilotGatewayAuthAutoConfiguration

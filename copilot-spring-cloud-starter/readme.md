@@ -46,20 +46,24 @@ loser.idemtotent.enabled=true
 ```yaml
 copilot:
   sentinel:
-    enabled: true
+    rest-exception-enabled: true
 ```
 
-Sentinel注册了一个AbstractSentinelInterceptor, 这是实现了Spring MVC的HandlerInterceptor, 在其preHandle方法里面捕获流控异常, 然后交给DefaultBlockExceptionHandler去处理, 这个类就默认返回字符串 "Blocked by Sentinel (flow limiting)", 我这边提供了一个返回REST结果的RestBlockExceptionHandler
+作用: 注册一个Bean RestBlockExceptionHandler, 用来对Sentinel流控, 降级等异常进行处理
+
+**原理解析:**
+
+​	Sentinel注册了一个AbstractSentinelInterceptor, 这是实现了Spring MVC的HandlerInterceptor, 在其preHandle方法里面捕获流控异常, 然后交给DefaultBlockExceptionHandler去处理, 这个类就默认返回字符串 "Blocked by Sentinel (flow limiting)", 我这边提供的RestBlockExceptionHandler返回REST结果, 结果类似这样
+
+```json
+{"code":"42901","desc":"已被流控"}
+```
+
+配置了RestExceptionAdvice后, RestBlockExceptionHandler处理熔断规则将不生效, 流控还是OK的
+
+所以在RestExceptionAdvice#handleThrowable方法里面特意检查了一下是否存在RestBlockExceptionHandler这个类, 如果存在就直接重新抛出异常
 
 
-
-# 三 Sentinel 授权规则流控
-
-提供了RequestHeaderInterceptor和MyRequestOriginParser
-
-需要分别在调用方配置Bean: RequestHeaderInterceptor
-
-被调用方配置Bean: MyRequestOriginParser
 
 application.yaml配置项
 
@@ -67,9 +71,42 @@ application.yaml配置项
 copilot.sentinel.rest-exception-enabled: true
 ```
 
-控制是否要对流控异常做统一异常处理
+控制是否要对流控异常做统一异常处理, 默认true
 
 
+
+# 三 Sentinel授权规则以及根据调用方流控支持
+
+1. application.yaml添加配置
+
+   ```yaml
+   copilot:
+     sentinel:
+       auth-rule:
+         enabled: true
+   ```
+
+2. CopilotSpringCloudAutoConfiguration会自动配置bean: originParser, 默认取 Auth-Origin 这个请求头
+
+   ```java
+   public class CopilotOriginParser implements RequestOriginParser {
+   
+   	private static final Logger log = LoggerFactory.getLogger(CopilotOriginParser.class);
+   
+   	@Autowired
+   	private SentinelProperties sentinelProperties;
+   
+   	@Override
+   	public String parseOrigin(HttpServletRequest request) {
+   		String header = sentinelProperties.getAuthRule().getHeader();
+   		String headerValue = request.getHeader(header);
+   		log.info("请求头 {} 的值为 {}", header, headerValue);
+   		return headerValue;
+   	}
+   }
+   ```
+   
+3. 还会自动配置AuthFlowInterceptor, 用来实现微服务A通过feign调微服务B时候传递Origin请求头
 
 # 四 租户ID
 

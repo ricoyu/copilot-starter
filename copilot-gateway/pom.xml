@@ -7,9 +7,9 @@
         <artifactId>copilot-starter</artifactId>
         <version>17.0.0</version>
     </parent>
-    <artifactId>copilot-spring-cloud</artifactId>
+    <artifactId>copilot-gateway</artifactId>
     <version>${project.parent.version}</version>
-    <name>Copilot SpringCloud</name>
+    <name>copilot SpringCloud Gateway</name>
 
     <properties>
         <java.version>17</java.version>
@@ -18,51 +18,40 @@
     <dependencies>
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
-            <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.alibaba.csp</groupId>
-            <artifactId>sentinel-parameter-flow-control</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.alibaba.csp</groupId>
-            <artifactId>sentinel-core</artifactId>
-            <version>1.8.6</version>
-        </dependency>
-        <dependency>
-            <groupId>com.alibaba.csp</groupId>
-            <artifactId>sentinel-spring-webmvc-6x-adapter</artifactId>
-            <version>1.8.6</version>
-        </dependency>
-        <dependency>
-            <groupId>com.alibaba.csp</groupId>
-            <artifactId>sentinel-annotation-aspectj</artifactId>
-        </dependency>
-        <!--<dependency>
-            <groupId>com.alibaba.csp</groupId>
-            <artifactId>sentinel-spring-webmvc-adapter</artifactId>
-            <version>${sentinel.version}</version>
-        </dependency>-->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-aop</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <artifactId>spring-boot-starter</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-gateway-core</artifactId>
+            <version>2.2.10.RELEASE</version>
+        </dependency>
+        <!--<dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+            <scope>provided</scope>
+        </dependency>-->
+        <!--<dependency>
+            <groupId>com.alibaba.csp</groupId>
+            <artifactId>sentinel-spring-cloud-gateway-adapter</artifactId>
+            <scope>provided</scope>
+        </dependency>-->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webflux</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.awesomecopilot</groupId>
@@ -73,10 +62,11 @@
             <groupId>com.awesomecopilot</groupId>
             <artifactId>commons-lang</artifactId>
         </dependency>
-        <dependency>
+        <!--JwtAuthenticationFilter 要用到 CopilotRestTemplate-->
+        <!--<dependency>
             <groupId>com.awesomecopilot</groupId>
             <artifactId>commons-spring</artifactId>
-        </dependency>
+        </dependency>-->
         <dependency>
             <groupId>com.awesomecopilot</groupId>
             <artifactId>copilot-cache</artifactId>

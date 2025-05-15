@@ -26,8 +26,9 @@
         <module>copilot-spring-boot-starter</module>
         <module>copilot-spring-boot-web</module>
         <module>copilot-spring-boot-web-starter</module>
-        <module>copilot-cloud-gateway</module>
-        <module>copilot-cloud-gateway-starter</module>
+        <module>copilot-gateway</module>
+        <module>copilot-gateway-starter</module>
+        <module>copilot-gateway-sentinel-starter</module>
         <module>copilot-spring-boot-security</module>
         <module>copilot-spring-boot-security-starter</module>
         <module>copilot-spring-boot-es-starter</module>

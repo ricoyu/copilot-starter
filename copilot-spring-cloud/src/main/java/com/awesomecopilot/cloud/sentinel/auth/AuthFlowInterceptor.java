@@ -1,11 +1,16 @@
 package com.awesomecopilot.cloud.sentinel.auth;
 
-import com.awesomecopilot.common.lang.resource.YamlReader;
+import com.awesomecopilot.cloud.properties.SentinelProperties;
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
-import org.springframework.beans.factory.annotation.Value;
+import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
-import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
  * 支持Sentinel授权规则流控, 需要在调用方为feign配置这个拦截器
@@ -19,20 +24,27 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
  * @version 1.0
  */
 public class AuthFlowInterceptor implements RequestInterceptor {
-	
-	private YamlReader yamlReader = new YamlReader("bootstrap");
-	private YamlReader yamlReader2 = new YamlReader("application");
-	
-	@Value("${spring.application.name}")
-	private String serviceName;
-	
+
+	private static final Logger log = LoggerFactory.getLogger(AuthFlowInterceptor.class);
+
+	@Autowired
+	private SentinelProperties sentinelProperties;
+
 	@Override
 	public void apply(RequestTemplate template) {
-		String applicationName = yamlReader.getString("spring.application.name");
-		if (isBlank(applicationName)) {
-			applicationName = yamlReader2.getString("spring.application.name");
+		ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+		HttpServletRequest request = requestAttributes.getRequest();
+		// 获取请求头Origin(默认值)
+		String header = sentinelProperties.getAuthRule().getHeader();
+		String headerValue = request.getHeader(header);
+
+		//设置Idempotent请求头
+		if (!template.headers().containsKey(header)) {
+			if (isNotBlank(headerValue)) {
+				log.info("添加{}请求头: {}", header, headerValue);
+				template.header(header, headerValue);
+			}
 		}
-		template.query("serviceName", applicationName); //添加调用方的serviceName
 	}
 
 }
