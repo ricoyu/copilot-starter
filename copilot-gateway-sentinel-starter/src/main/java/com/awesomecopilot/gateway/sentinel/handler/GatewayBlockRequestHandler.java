@@ -1,14 +1,9 @@
 package com.awesomecopilot.gateway.sentinel.handler;
 
 import com.alibaba.csp.sentinel.adapter.gateway.sc.callback.DefaultBlockRequestHandler;
-import com.alibaba.csp.sentinel.slots.block.authority.AuthorityException;
-import com.alibaba.csp.sentinel.slots.block.degrade.DegradeException;
-import com.alibaba.csp.sentinel.slots.block.flow.FlowException;
-import com.alibaba.csp.sentinel.slots.block.flow.param.ParamFlowException;
-import com.alibaba.csp.sentinel.slots.system.SystemBlockException;
 import com.alibaba.fastjson.JSON;
-import com.awesomecopilot.common.lang.vo.Results;
 import com.awesomecopilot.common.lang.vo.Result;
+import com.awesomecopilot.common.lang.vo.Results;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -21,12 +16,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-import static com.awesomecopilot.common.lang.errors.ErrorTypes.AUTHORITY_BLOCK_EXCEPTION;
-import static com.awesomecopilot.common.lang.errors.ErrorTypes.DEGRADE_EXCEPTION;
-import static com.awesomecopilot.common.lang.errors.ErrorTypes.FLOW_EXCEPTION;
-import static com.awesomecopilot.common.lang.errors.ErrorTypes.HOT_PARAM_BLOCK_EXCEPTION;
-import static com.awesomecopilot.common.lang.errors.ErrorTypes.SYSTEM_BLOCK_EXCEPTION;
-import static com.awesomecopilot.common.lang.errors.ErrorTypes.TOO_MANY_REQUESTS;
+import static com.awesomecopilot.common.lang.errors.ErrorTypes.GATEWAY_FLOW_EXCEPTION;
 
 /**
  * 网关限流统一处理
@@ -74,22 +64,6 @@ public class GatewayBlockRequestHandler extends DefaultBlockRequestHandler {
 	}
 	
 	private Result buildErrorResult(Throwable e) {
-		if (e instanceof FlowException) {
-			log.warn(FLOW_EXCEPTION.message());
-			return Results.status(FLOW_EXCEPTION).build();
-		} else if (e instanceof DegradeException) {
-			log.warn(DEGRADE_EXCEPTION.message());
-			return Results.status(DEGRADE_EXCEPTION).build();
-		} else if (e instanceof AuthorityException) {
-			log.warn(AUTHORITY_BLOCK_EXCEPTION.message());
-			return Results.status(AUTHORITY_BLOCK_EXCEPTION).build();
-		} else if (e instanceof ParamFlowException) {
-			log.warn(HOT_PARAM_BLOCK_EXCEPTION.message());
-			return Results.status(HOT_PARAM_BLOCK_EXCEPTION).build();
-		} else if (e instanceof SystemBlockException) {
-			log.warn(SYSTEM_BLOCK_EXCEPTION.message());
-			return Results.status(SYSTEM_BLOCK_EXCEPTION).build();
-		}
-		return Results.status(TOO_MANY_REQUESTS).build();
+		return Results.status(GATEWAY_FLOW_EXCEPTION).build();
 	}
 }

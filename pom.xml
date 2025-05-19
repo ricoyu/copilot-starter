@@ -37,6 +37,8 @@
         <module>copilot-spring-boot-oauth2</module>
         <module>copilot-spring-boot-oauth2-starter</module>
         <module>copilot-spring-boot-webflux</module>
+        <module>copilot-spring-security6</module>
+        <module>copilot-spring-security6-starter</module>
     </modules>
 
     <dependencyManagement>
