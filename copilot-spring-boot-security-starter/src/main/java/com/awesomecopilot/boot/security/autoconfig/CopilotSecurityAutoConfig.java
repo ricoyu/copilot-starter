@@ -90,7 +90,7 @@ public class CopilotSecurityAutoConfig {
 	}
 	
 	@Bean
-	@ConditionalOnProperty(prefix = "copilot.security", name = "auth-center-enabled", havingValue = "true", matchIfMissing = false)
+	@ConditionalOnProperty(prefix = "copilot.security6", name = "auth-center-enabled", havingValue = "true", matchIfMissing = false)
 	public RsaController rsaController() {
 		properties.getWhiteList().add("/public-key");
 		return new RsaController();
