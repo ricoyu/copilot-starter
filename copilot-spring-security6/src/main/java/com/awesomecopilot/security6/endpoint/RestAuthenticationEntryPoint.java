@@ -5,7 +5,8 @@ import com.awesomecopilot.common.lang.vo.Results;
 import com.awesomecopilot.web.utils.RestUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
@@ -26,15 +27,15 @@ import static com.awesomecopilot.common.lang.errors.ErrorTypes.TOKEN_EXPIRED;
  * @version 1.0
  */
 @Component("restAuthenticationEntryPoint")
-@Slf4j
 public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
-	
+	private static final Logger logger = LoggerFactory.getLogger(RestAuthenticationEntryPoint.class);
+
 	@Override
 	public void commence(
 			HttpServletRequest request,
 			HttpServletResponse response,
 			AuthenticationException authException) throws IOException {
-		
+		logger.error("", authException);
 		Result result = Results.status(TOKEN_EXPIRED).build();
 		RestUtils.writeJson(response, result);
 	}

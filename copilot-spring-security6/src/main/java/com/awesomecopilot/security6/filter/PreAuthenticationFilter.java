@@ -10,7 +10,8 @@ import com.awesomecopilot.security6.constants.ThreadLocalSecurityConstants;
 import com.awesomecopilot.web.utils.RestUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.util.AntPathMatcher;
@@ -33,8 +34,9 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
  * @author Rico Yu  ricoyu520@gmail.com
  * @version 1.0
  */
-@Slf4j
 public class PreAuthenticationFilter extends AbstractPreAuthenticatedProcessingFilter {
+
+	private static final Logger log = LoggerFactory.getLogger(PreAuthenticationFilter.class);
 
 	private static final AntPathMatcher ANT_PATH_MATCHER = new AntPathMatcher();
 

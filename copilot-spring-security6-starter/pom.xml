@@ -65,6 +65,16 @@
         <dependency>
             <groupId>com.awesomecopilot</groupId>
             <artifactId>copilot-web</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.jboss.logging</groupId>
+                    <artifactId>jboss-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- JUnit 5 API -->

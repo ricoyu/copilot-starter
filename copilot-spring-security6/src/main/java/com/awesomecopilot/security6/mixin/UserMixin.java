@@ -11,7 +11,7 @@ import com.awesomecopilot.security6.deserializer.UserDeserializer;
  * This class also register a custom deserializer {@link UserDeserializer} to deserialize User object successfully.
  * In order to use this mixin you need to register two more mixin classes in your ObjectMapper configuration.
  * <ol>
- *     <li>{@link SimpleGrantedAuthorityMixin}</li>
+ *     <li>{@link WildcardGrantedAuthorityMixIn}</li>
  *     <li>{@link UnmodifiableSetMixin}</li>
  * </ol>
  * <pre>

@@ -93,6 +93,10 @@
             <groupId>com.awesomecopilot</groupId>
             <artifactId>copilot-networking</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.awesomecopilot</groupId>
+            <artifactId>copilot-web</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>io.jsonwebtoken</groupId>

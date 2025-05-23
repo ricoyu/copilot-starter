@@ -1,5 +1,7 @@
 package com.awesomecopilot.security6.deserializer;
 
+import com.awesomecopilot.security6.authority.WildcardGrantedAuthority;
+import com.awesomecopilot.security6.mixin.UserMixin;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -8,8 +10,6 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.MissingNode;
-import com.awesomecopilot.security6.mixin.UserMixin;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 
 import java.io.IOException;
@@ -40,7 +40,10 @@ public class UserDeserializer extends JsonDeserializer<User> {
 	public User deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
 		ObjectMapper mapper = (ObjectMapper) jp.getCodec();
 		JsonNode jsonNode = mapper.readTree(jp);
-		Set<SimpleGrantedAuthority> authorities = mapper.convertValue(jsonNode.get("authorities"), new TypeReference<Set<SimpleGrantedAuthority>>() {
+		//Set<GrantedAuthority> authorities = mapper.readValue(
+		//		readJsonNode(jsonNode, "authorities").traverse(mapper), new TypeReference<Set<GrantedAuthority>>() {
+		//		});
+		Set<WildcardGrantedAuthority> authorities = mapper.convertValue(jsonNode.get("authorities"), new TypeReference<Set<WildcardGrantedAuthority>>() {
 		});
 		JsonNode password = readJsonNode(jsonNode, "password");
 		User result =  new User(

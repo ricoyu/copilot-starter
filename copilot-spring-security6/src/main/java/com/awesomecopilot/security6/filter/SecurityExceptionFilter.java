@@ -1,11 +1,15 @@
 package com.awesomecopilot.security6.filter;
 
-import com.awesomecopilot.common.lang.context.ThreadContext;
+import com.awesomecopilot.common.lang.errors.ErrorTypes;
+import com.awesomecopilot.common.lang.vo.Result;
+import com.awesomecopilot.common.lang.vo.Results;
+import com.awesomecopilot.web.utils.RestUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
@@ -25,8 +29,9 @@ import java.io.IOException;
  * @author Rico Yu ricoyu520@gmail.com
  * @version 1.0
  */
-@Slf4j
 public class SecurityExceptionFilter extends OncePerRequestFilter {
+
+	private static final Logger log = LoggerFactory.getLogger(SecurityExceptionFilter.class);
 	
 	public static final String ROUTE_CAUSE = "routeCause";
 	
@@ -39,8 +44,10 @@ public class SecurityExceptionFilter extends OncePerRequestFilter {
 			chain.doFilter(request, response);
 		} catch (Exception e) {
 			log.error("", e);
-			ThreadContext.put(ROUTE_CAUSE, e);
-			handlerExceptionResolver.resolveException(request, response, null, e);
+			//ThreadContext.put(ROUTE_CAUSE, e);
+			//handlerExceptionResolver.resolveException(request, response, null, e);
+			Result result = Results.status(ErrorTypes.INTERNAL_SERVER_ERROR).build();
+			RestUtils.writeJson(response, result);
 		}
 	}
 }

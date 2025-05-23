@@ -4,7 +4,8 @@ import com.awesomecopilot.common.lang.vo.Result;
 import com.awesomecopilot.common.lang.vo.Results;
 import com.awesomecopilot.security.exception.JwtTokenParseException;
 import com.awesomecopilot.security.exception.TokenExpiredException;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -29,11 +30,11 @@ import static com.awesomecopilot.common.lang.errors.ErrorTypes.TOKEN_INVALID;
  * @author Rico Yu ricoyu520@gmail.com
  * @version 1.0
  */
-@Slf4j
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice
 public class RestSecurityExceptionAdvice {
-	
+
+	private static final Logger log = LoggerFactory.getLogger(RestSecurityExceptionAdvice.class);
 	/**
 	 * 解析JWT Token失败处理
 	 *

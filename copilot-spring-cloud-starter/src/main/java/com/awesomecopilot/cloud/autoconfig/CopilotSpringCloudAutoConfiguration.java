@@ -4,6 +4,7 @@ import com.alibaba.csp.sentinel.annotation.aspectj.SentinelResourceAspect;
 import com.awesomecopilot.cloud.feign.aspect.IdempotentAspect;
 import com.awesomecopilot.cloud.feign.interceptor.IdempotentInterceptor;
 import com.awesomecopilot.cloud.feign.interceptor.TenantIdInterceptor;
+import com.awesomecopilot.cloud.filter.ExceptionFilter;
 import com.awesomecopilot.cloud.origin.CopilotOriginParser;
 import com.awesomecopilot.cloud.properties.IdemtotentProperties;
 import com.awesomecopilot.cloud.properties.SentinelProperties;
@@ -14,6 +15,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -99,5 +101,13 @@ public class CopilotSpringCloudAutoConfiguration {
 	@ConditionalOnProperty(name = "copilot.sentinel.auth-rule.enabled", havingValue = "true", matchIfMissing = true)
 	public AuthFlowInterceptor authFlowInterceptor() {
 		return new AuthFlowInterceptor();
+	}
+
+	@Bean
+	public FilterRegistrationBean exceptionFilter() {
+		FilterRegistrationBean<ExceptionFilter> registrationBean = new FilterRegistrationBean<>();
+		registrationBean.setFilter(new ExceptionFilter());
+		registrationBean.addUrlPatterns("/*"); //过滤所有
+		return registrationBean;
 	}
 }

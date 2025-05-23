@@ -27,7 +27,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
  * @version 1.0
  * @on
  */
-public class UsernamePasswordAuthenticationFilter extends org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter {
+public class UsernamePasswordAuthenticationFilter extends org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter{
 
 	private static final Logger log = LoggerFactory.getLogger(UsernamePasswordAuthenticationFilter.class);
 	private static final String ERROR_MESSAGE = "Something went wrong while parsing /login request body";
