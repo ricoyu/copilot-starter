@@ -18,7 +18,7 @@ import org.springframework.context.annotation.Configuration;
  * @version 1.0
  */
 @Configuration
-@ConditionalOnProperty(prefix = "copilot.cache", value = "enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "copilot.cache", value = "enabled", havingValue = "true", matchIfMissing = true)
 @EnableConfigurationProperties({CopilotCacheProperties.class})
 public class CopilotCacheAutoConfiguration {
 	

@@ -22,7 +22,7 @@
 3. application.yaml增加配置
 
    ```yaml
-   loser.cache.enabled: true
+   copilot.cache.enabled: true
    ```
 
 即可开启对@RedisListener的支持

@@ -1,3 +1,6 @@
+* 登录url: /login POST请求
+* 登出URL: /logout 哪个请求方法都可以
+
 # 一 用户名密码登录
 
 只需要三板斧
@@ -193,3 +196,9 @@
    * @PreAuthorize("hasRole('ADMIN')") 会自动补全前缀(实际校验 ROLE_ADMIN)
 
    * @PreAuthorize("hasAuthority('user:read')") 检查具有某权限, 支持通配符, 比如数据库中给用户赋了权限user:*, 那么该用户就能访问@PreAuthorize("hasAuthority('user:read')")保护的接口了
+
+
+
+# 四 SecurityContextHolder 能力增强
+
+登录成功后我们可以通过SecurityContextHolder.getContext().getAuthentication()拿到UsernamePasswordAuthenticationToken对象, 但是注意到默认实现getContext()方法是从SecurityContextHolderStrategy中拿context的, 但是SecurityContextHolderStrategy的默认实现是基于ThreadLocal的, 所以如果Tomcat环境使用线程池的情况下, 后续携带token访问的时候SecurityContextHolder.getContext().getAuthentication()就大概率拿不到UsernamePasswordAuthenticationToken对象了, 所以我们这边在LoginSuccessHandler里面将token与UsernamePasswordAuthenticationToken关联起来设置到Redis中, 然后提供了一个RestoreAuthenticationFilter根据token从Redis中取回UsernamePasswordAuthenticationToken, 再塞进SecurityContextHolder.getContext()中

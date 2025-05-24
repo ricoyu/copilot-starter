@@ -3,6 +3,7 @@ package com.awesomecopilot.boot.security6.autoconfig;
 import com.awesomecopilot.security6.endpoint.RestAuthenticationEntryPoint;
 import com.awesomecopilot.security6.expression.handler.WildcardMethodSecurityExpressionHandler;
 import com.awesomecopilot.security6.filter.PreAuthenticationFilter;
+import com.awesomecopilot.security6.filter.RestoreAuthenticationFilter;
 import com.awesomecopilot.security6.filter.SecurityExceptionFilter;
 import com.awesomecopilot.security6.filter.UsernamePasswordAuthenticationFilter;
 import com.awesomecopilot.security6.filter.VerifyCodeFilter;
@@ -36,6 +37,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationProvider;
 import org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter;
 
@@ -88,6 +90,10 @@ public class CopilotWebSecurityAutoConfig {
 			form.loginProcessingUrl(properties.getUserPassLogin().getLoginUrl());
 		});
 
+		http.logout(logout -> logout
+				.logoutUrl(properties.getUserPassLogin().getLogoutUrl())
+				.logoutSuccessHandler(logoutSuccessHandler()));
+
 		/*
 		 * 在过滤器链上发生未处理的异常时, RestExceptionAdvice是处理不到的,
 		 * 所以通过这个Filter来统一捕获, 然后通过HandlerExceptionResolver代理给RestExceptionAdvice来处理
@@ -97,7 +103,7 @@ public class CopilotWebSecurityAutoConfig {
 		http.addFilterBefore(new HttpServletRequestRepeatedReadFilter(), WebAsyncManagerIntegrationFilter.class);
 		http.addFilterBefore(preAuthenticationFilter(authenticationManager(http)),
 						UsernamePasswordAuthenticationFilter.class);
-
+		http.addFilterBefore(new RestoreAuthenticationFilter(), LogoutFilter.class);
 		http.addFilterAt(usernamePasswordAuthenticationFilter(authenticationManager(http)),
 				org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
 
@@ -105,10 +111,6 @@ public class CopilotWebSecurityAutoConfig {
 		if (picCode != null && picCode.isEnabled()) {
 			http.addFilterBefore(verifyCodeFilter(), UsernamePasswordAuthenticationFilter.class);
 		}
-
-		http.logout(logout -> logout
-				.logoutUrl(properties.getUserPassLogin().getLogoutUrl())
-				.logoutSuccessHandler(logoutSuccessHandler()));
 
 		//http.headers(headers -> {
 		//	headers.addHeaderWriter(new XXssProtectionHeaderWriter())
