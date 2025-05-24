@@ -1,6 +1,7 @@
 package com.awesomecopilot.security6.processor;
 
 import com.awesomecopilot.security6.authority.WildcardGrantedAuthority;
+import com.awesomecopilot.security6.mixin.UsernamePasswordAuthenticationTokenMixin;
 import com.awesomecopilot.security6.mixin.WildcardGrantedAuthorityMixIn;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.awesomecopilot.security6.mixin.GrantedAuthorityMixIn;
@@ -10,6 +11,7 @@ import com.awesomecopilot.security6.mixin.UserMixin;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.core.Ordered;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -46,6 +48,7 @@ public class ObjectMapperBeanPostProcessor implements BeanPostProcessor, Ordered
 			objectMapper.addMixIn(GrantedAuthority.class, GrantedAuthorityMixIn.class);
 			objectMapper.addMixIn(SimpleGrantedAuthority.class, SimpleGrantedAuthorityMixIn.class);
 			objectMapper.addMixIn(WildcardGrantedAuthority.class, WildcardGrantedAuthorityMixIn.class);
+			objectMapper.addMixIn(UsernamePasswordAuthenticationToken.class, UsernamePasswordAuthenticationTokenMixin.class);
 			objectMapper.addMixIn(User.class, UserMixin.class);
 			objectMapper.addMixIn(Collections.unmodifiableSet(new HashSet<>(0)).getClass(), UnmodifiableSetMixin.class);
 			return objectMapper;

@@ -10,6 +10,8 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.MissingNode;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 
 import java.io.IOException;
@@ -43,8 +45,13 @@ public class UserDeserializer extends JsonDeserializer<User> {
 		//Set<GrantedAuthority> authorities = mapper.readValue(
 		//		readJsonNode(jsonNode, "authorities").traverse(mapper), new TypeReference<Set<GrantedAuthority>>() {
 		//		});
-		Set<WildcardGrantedAuthority> authorities = mapper.convertValue(jsonNode.get("authorities"), new TypeReference<Set<WildcardGrantedAuthority>>() {
-		});
+		Set<? extends GrantedAuthority> authorities = null;
+
+		try {
+			authorities = mapper.convertValue(jsonNode.get("authorities"), new TypeReference<Set<WildcardGrantedAuthority>>() {});
+		}catch (Exception e){
+			authorities = mapper.convertValue(jsonNode.get("authorities"), new TypeReference<Set<SimpleGrantedAuthority>>() {});
+		}
 		JsonNode password = readJsonNode(jsonNode, "password");
 		User result =  new User(
 				readJsonNode(jsonNode, "username").asText(), password.asText(""),

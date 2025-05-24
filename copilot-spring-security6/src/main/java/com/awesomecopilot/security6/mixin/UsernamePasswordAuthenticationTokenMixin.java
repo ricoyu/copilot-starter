@@ -13,7 +13,7 @@ import com.awesomecopilot.security6.deserializer.UsernamePasswordAuthenticationT
  * In order to use this mixin you'll need to add 3 more mixin classes.
  * <ol>
  *     <li>{@link UnmodifiableSetMixin}</li>
- *     <li>{@link SimpleGrantedAuthorityMixin}</li>
+ *     <li>{@link SimpleGrantedAuthorityMixIn}</li>
  *     <li>{@link UserMixin}</li>
  * </ol>
  *

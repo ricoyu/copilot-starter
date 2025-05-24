@@ -58,7 +58,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 				.getAuthorities();
 		log.info("用户: {} 的权限列表: \n{}", username, JacksonUtils.toPrettyJson(authorities));
 		String ip = ServletUtils.getRemoteRealIP(request);
-		
+		AuthUtils.setAuthentication(accessToken, SecurityContextHolder.getContext().getAuthentication());
 		doLogin(response, accessToken, username, userDetails, authorities, ip, false);
 	}
 	

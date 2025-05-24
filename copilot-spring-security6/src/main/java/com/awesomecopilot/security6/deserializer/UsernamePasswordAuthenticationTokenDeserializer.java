@@ -1,5 +1,7 @@
 package com.awesomecopilot.security6.deserializer;
 
+import com.awesomecopilot.security6.authority.WildcardGrantedAuthority;
+import com.awesomecopilot.security6.mixin.UsernamePasswordAuthenticationTokenMixin;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -8,9 +10,9 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.MissingNode;
-import com.awesomecopilot.security6.mixin.UsernamePasswordAuthenticationTokenMixin;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.io.IOException;
 import java.util.List;
@@ -60,9 +62,16 @@ public class UsernamePasswordAuthenticationTokenDeserializer extends JsonDeseria
 		} else {
 			credentials = credentialsNode.asText();
 		}
-		List<GrantedAuthority> authorities = mapper.readValue(
-				readJsonNode(jsonNode, "authorities").traverse(mapper), new TypeReference<List<GrantedAuthority>>() {
-				});
+		//List<GrantedAuthority> authorities = mapper.readValue(
+		//		readJsonNode(jsonNode, "authorities").traverse(mapper), new TypeReference<List<GrantedAuthority>>() {
+		//		});
+		List<? extends GrantedAuthority> authorities = null;
+
+		try {
+			authorities = mapper.convertValue(jsonNode.get("authorities"), new TypeReference<List<WildcardGrantedAuthority>>() {});
+		} catch (Exception e) {
+			authorities = mapper.convertValue(jsonNode.get("authorities"), new TypeReference<List<SimpleGrantedAuthority>>() {});
+		}
 		if (authenticated) {
 			token = new UsernamePasswordAuthenticationToken(principal, credentials, authorities);
 		} else {
