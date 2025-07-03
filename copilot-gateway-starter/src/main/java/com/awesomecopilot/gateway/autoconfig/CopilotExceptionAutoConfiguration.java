@@ -8,8 +8,8 @@ import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
-import org.springframework.boot.autoconfigure.web.WebProperties.Resources;
 import org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.reactive.error.DefaultErrorWebExceptionHandler;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -43,39 +43,43 @@ import java.util.List;
 //@EnableConfigurationProperties({ServerProperties.class, Resources.class, CopilotGatewayExceptionProperties.class})
 @EnableConfigurationProperties({ServerProperties.class,CopilotGatewayExceptionProperties.class})
 public class CopilotExceptionAutoConfiguration {
-	
+
 	private ServerProperties serverProperties;
-	
+
 	private ApplicationContext applicationContext;
-	
+
+	private ResourceProperties resourceProperties;
+
 	private List<ViewResolver> viewResolvers;
-	
+
 	private ServerCodecConfigurer serverCodecConfigurer;
-	
+
 	public CopilotExceptionAutoConfiguration(ServerProperties serverProperties,
-	                                         ObjectProvider<List<ViewResolver>> viewResolversProvider,
-	                                         ServerCodecConfigurer serverCodecConfigurer,
-	                                         ApplicationContext applicationContext) {
+	                                       ResourceProperties resourceProperties,
+	                                       ObjectProvider<List<ViewResolver>> viewResolversProvider,
+	                                       ServerCodecConfigurer serverCodecConfigurer,
+	                                       ApplicationContext applicationContext) {
 		this.serverProperties = serverProperties;
 		this.applicationContext = applicationContext;
+		this.resourceProperties = resourceProperties;
 		this.viewResolvers = viewResolversProvider.getIfAvailable(() -> Collections.emptyList());
 		this.serverCodecConfigurer = serverCodecConfigurer;
 	}
-    
-    /**
-     * ErrorWebExceptionHandler把实际错误处理交给GatewayExceptionHandlerAdvice
-     * @return
-     */
-    @Bean
-    @ConditionalOnMissingBean(name = "gatewayExceptionHandlerAdvice")
-    public GatewayExceptionHandlerAdvice gatewayExceptionHandlerAdvice() {
-        return new GatewayExceptionHandlerAdvice();
-    }
-	
+
+	/**
+	 * ErrorWebExceptionHandler把实际错误处理交给GatewayExceptionHandlerAdvice
+	 * @return
+	 */
+	@Bean
+	@ConditionalOnMissingBean(name = "gatewayExceptionHandlerAdvice")
+	public GatewayExceptionHandlerAdvice gatewayExceptionHandlerAdvice() {
+		return new GatewayExceptionHandlerAdvice();
+	}
+
 	@Bean
 	public ErrorWebExceptionHandler errorWebExceptionHandler(ErrorAttributes errorAttributes) {
 		DefaultErrorWebExceptionHandler exceptionHandler = new CopilotErrorWebExceptionHandler(
-				errorAttributes, new Resources(),
+				errorAttributes, this.resourceProperties,
 				this.serverProperties.getError(), this.applicationContext);
 		exceptionHandler.setViewResolvers(this.viewResolvers);
 		exceptionHandler.setMessageWriters(this.serverCodecConfigurer.getWriters());

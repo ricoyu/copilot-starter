@@ -31,7 +31,7 @@ import reactor.core.publisher.Mono;
 @EnableConfigurationProperties(value= {GatewayAuthProperties.class})
 public class AuthorizationFilter implements GlobalFilter, Ordered {
 
-	@Value("${copilot.security6.user-pass-login.login-url:/login}")
+	@Value("${copilot.security.user-pass-login.login-url:/login}")
 	private String loginUrl;
 
 	@Autowired

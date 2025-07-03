@@ -4,6 +4,7 @@ import com.awesomecopilot.oauth2.advice.TokenEndpointLoggerAspect;
 import com.awesomecopilot.oauth2.endpoint.Oauth2AuthenticationentryPoint;
 import com.awesomecopilot.oauth2.handler.LoginFailureHandler;
 import com.awesomecopilot.oauth2.listener.AuthenticationFailureListener;
+import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -11,9 +12,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,48 +24,60 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
-public class CopilotOAuth2WebSecurityAutoConfig {
+public class CopilotOAuth2WebSecurityAutoConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
     private UserDetailsService userDetailsService;
 
-    @Autowired
-    private Oauth2AuthenticationentryPoint oauth2AuthenticationentryPoint;
-
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.formLogin(form -> form
-                        .failureHandler(loginFailureHandler())
-                )
-                .authorizeHttpRequests(authorizeRequests ->
-                        authorizeRequests
-                                .anyRequest().authenticated()
-                )
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.disable())
-                .httpBasic(httpBasic -> httpBasic.authenticationEntryPoint(oauth2AuthenticationentryPoint));
-        return http.build();
+    @Override
+    public void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
     }
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
+    @Override
+    public void configure(HttpSecurity http) throws Exception {
+        http.formLogin()
+                .and()
+                .authorizeRequests()
+                .anyRequest()
+                .authenticated()
+                .and()
+                .csrf().disable().cors();
+        //配置 BasicAuthenticationFilter
+        http.httpBasic().authenticationEntryPoint(oauth2AuthenticationentryPoint());
     }
 
+
+
+    /**
+     * configure方法配置了AuthenticationManager, 这里就将其暴露为一个Spring Bean
+     * 这个类是用来做用户名/密码登录的
+     * <p>
+     * 问题: bean名字配成authenticationManager的话, 调用 /oauth/token 会抛StackoverflowException
+     * 名字改为authenticationManagerBean就没问题
+     *
+     * @return AuthenticationManager
+     */
+    @SneakyThrows
     @Bean
-    public AuthenticationProvider authenticationProvider(UserDetailsService jdbcUserDetailsService, PasswordEncoder passwordEncoder) {
-        // 创建 DaoAuthenticationProvider，将 UserDetailsService 和 PasswordEncoder 配置到 AuthenticationManager
-        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
-        authenticationProvider.setUserDetailsService(jdbcUserDetailsService);
-        authenticationProvider.setPasswordEncoder(passwordEncoder);
-        return authenticationProvider;
+    public AuthenticationManager authenticationManagerBean() {
+        return super.authenticationManagerBean();
     }
 
+    /**
+     * 带随机盐的加密器
+     *
+     * @return PasswordEncoder
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * 用来打印error log的
+     * @return
+     */
     @Bean
     @ConditionalOnMissingBean(TokenEndpointLoggerAspect.class)
     public TokenEndpointLoggerAspect tokenEndpointLoggerAspect() {

@@ -1,7 +1,7 @@
 package com.awesomecopilot.boot.web.autoconfig;
 
 import com.awesomecopilot.web.listener.ThreadLocalCleanupListener;
-import jakarta.servlet.ServletRequestListener;
+import javax.servlet.ServletRequestListener;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.web.servlet.ServletListenerRegistrationBean;

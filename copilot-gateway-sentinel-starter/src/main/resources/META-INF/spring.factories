@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.awesomecopilot.gateway.sentinel.autoconfig.CopilotGatewaySentinelAutoConfig

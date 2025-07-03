@@ -1,17 +1,12 @@
 package com.awesomecopilot.cloud.client;
 
-import io.micrometer.observation.Observation;
-import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpResponse;
-import org.springframework.http.client.observation.ClientHttpObservationDocumentation;
-import org.springframework.http.client.observation.ClientRequestObservationContext;
-import org.springframework.http.client.observation.ClientRequestObservationConvention;
-import org.springframework.http.client.observation.DefaultClientRequestObservationConvention;
 import org.springframework.util.Assert;
 import org.springframework.web.client.RequestCallback;
 import org.springframework.web.client.ResourceAccessException;
@@ -39,75 +34,45 @@ import java.util.Random;
 @Slf4j
 public class CopilotRestTemplate extends RestTemplate {
 
-	private static final ClientRequestObservationConvention
-			DEFAULT_OBSERVATION_CONVENTION = new DefaultClientRequestObservationConvention();
-
-	private ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
+	@Autowired
 	private DiscoveryClient discoveryClient;
 
-	public CopilotRestTemplate(DiscoveryClient discoveryClient) {
-		this.discoveryClient = discoveryClient;
+	public CopilotRestTemplate() {
 	}
 
 	@Override
-	protected <T> T doExecute(URI url, String uriTemplate,
-	                          HttpMethod method, RequestCallback requestCallback,
-	                          ResponseExtractor<T> responseExtractor) throws RestClientException {
-		Assert.notNull(url, "url is required");
+	protected <T> T doExecute(URI url, HttpMethod method, RequestCallback requestCallback, ResponseExtractor<T> responseExtractor) throws RestClientException {
+		Assert.notNull(url, "URI is required");
 		Assert.notNull(method, "HttpMethod is required");
-
-		ClientHttpRequest request;
-		try {
-			log.info("请求的url路径为:{}", url);
-			//把服务名 替换成我们的IP
-			url = replaceUrl(url);
-			log.info("替换后的路径:{}", url);
-			request = createRequest(url, method);
-		}
-		catch (IOException ex) {
-			throw createResourceAccessException(url, method, ex);
-		}
-
-		ClientRequestObservationContext observationContext = new ClientRequestObservationContext(request);
-		observationContext.setUriTemplate(uriTemplate);
-		Observation observation = ClientHttpObservationDocumentation.HTTP_CLIENT_EXCHANGES.observation(
-				getObservationConvention(), DEFAULT_OBSERVATION_CONVENTION,
-				() -> observationContext, this.observationRegistry).start();
 		ClientHttpResponse response = null;
-		try (Observation.Scope scope = observation.openScope()){
+		try {
+			//判断url的拦截路径,然后去Nacos获取地址随机选取一个
+			log.info("请求的url路径为:{}", url);
+			url = replaceUrl(url);
+			log.info("替换后的路径:{}",url);
+
+			ClientHttpRequest request = createRequest(url, method);
 			if (requestCallback != null) {
 				requestCallback.doWithRequest(request);
 			}
+
 			response = request.execute();
-			observationContext.setResponse(response);
 			handleResponse(url, method, response);
 			return (responseExtractor != null ? responseExtractor.extractData(response) : null);
-		}
-		catch (IOException ex) {
-			ResourceAccessException accessEx = createResourceAccessException(url, method, ex);
-			observation.error(accessEx);
-			throw accessEx;
-		}
-		catch (Throwable ex) {
-			observation.error(ex);
-			throw ex;
-		}
-		finally {
-			if (response != null) {
-				response.close();
-			}
-			observation.stop();
+
+		} catch (IOException e) {
+			String resource = url.toString();
+			String query = url.getRawQuery();
+			resource = (query != null ? resource.substring(0, resource.indexOf('?')) : resource);
+			throw new ResourceAccessException("I/O error on " + method.name() + " request for \"" + resource + "\": " + e.getMessage(), e);
 		}
 	}
 
 	private URI replaceUrl(URI url) {
-		//1:从URI中解析调用的服务名,如: product-center
-		String serviceName = url.getHost();
-		log.info("调用微服务的名称:{}", serviceName);
-
-		//2:解析我们的请求路径 如: /selectProductInfoById/1
-		String path = url.getPath();
-		log.info("请求path:{}", path);
+		String sourceUrl = url.toString();
+		String[] urlParts = sourceUrl.split("//");
+		int index = urlParts[1].replaceFirst("/", "@").indexOf("@");
+		String serviceName = urlParts[1].substring(0, index);
 
 		//通过微服务的名称去nacos服务端获取 对应的实例列表
 		List<ServiceInstance> instances = discoveryClient.getInstances(serviceName);
@@ -115,35 +80,18 @@ public class CopilotRestTemplate extends RestTemplate {
 			throw new RuntimeException("没有可用的微服务实例列表:" + serviceName);
 		}
 
-		String serviceIp = chooseTargetIp(instances);
-		String source = serviceIp + path;
-		try {
-			return new URI(source);
-		} catch (URISyntaxException e) {
-			log.error("根据source:{}构建URI异常", source);
-		}
-		return url;
-	}
-
-
-	/**
-	 * 从服务列表中 随机选举一个ip
-	 * @param instances
-	 * @return
-	 */
-	private String chooseTargetIp(List<ServiceInstance> instances) {
 		//采取随机的获取一个
 		Random random = new Random();
-		Integer randomIndex = random.nextInt(instances.size());
+		int randomIndex = random.nextInt(instances.size());
+		log.info("随机下标:{}", randomIndex);
 		String serviceIp = instances.get(randomIndex).getUri().toString();
-		log.info("随机选举的服务IP:{}", serviceIp);
-		return serviceIp;
-	}
-
-	private static ResourceAccessException createResourceAccessException(URI url, HttpMethod method, IOException ex) {
-		String resource = url.toString();
-		resource = (url.getRawQuery() != null ? resource.substring(0, resource.indexOf('?')) : resource);
-		return new ResourceAccessException("I/O error on " + method.name() +
-				" request for \"" + resource + "\": " + ex.getMessage(), ex);
+		log.info("随机选择的服务IP:{}", serviceIp);
+		String targetSource = urlParts[1].replace(serviceName, serviceIp);
+		try {
+			return new URI(targetSource);
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
+		return url;
 	}
 }

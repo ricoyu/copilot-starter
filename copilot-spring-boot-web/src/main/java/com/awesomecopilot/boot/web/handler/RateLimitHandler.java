@@ -1,6 +1,6 @@
 package com.awesomecopilot.boot.web.handler;
 
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * 触发限流规则后, 默认会返回错误码

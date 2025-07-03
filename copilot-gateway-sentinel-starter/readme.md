@@ -16,3 +16,9 @@
 </dependency>
 ```
 
+开启网关限流
+
+```properties
+copilot.gateway.sentinel.enabled=true
+```
+

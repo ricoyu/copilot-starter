@@ -2,7 +2,7 @@ package com.awesomecopilot.cloud.origin;
 
 import com.alibaba.csp.sentinel.adapter.spring.webmvc.callback.RequestOriginParser;
 import com.awesomecopilot.cloud.properties.SentinelProperties;
-import jakarta.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

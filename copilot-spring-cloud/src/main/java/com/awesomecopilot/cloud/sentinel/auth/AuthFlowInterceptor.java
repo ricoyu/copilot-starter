@@ -3,7 +3,7 @@ package com.awesomecopilot.cloud.sentinel.auth;
 import com.awesomecopilot.cloud.properties.SentinelProperties;
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
-import jakarta.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -4,7 +4,7 @@
 <dependency>
 	<groupId>com.loserico</groupId>
 	<artifactId>loser-spring-boot-es-starter</artifactId>
-	<version>2.6.2</version>
+	<version>17.0.0-jdk8</version>
 </dependency>
 ```
 

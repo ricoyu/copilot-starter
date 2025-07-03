@@ -2,7 +2,7 @@ package com.awesomecopilot.boot.oauth2.service;
 
 import com.awesomecopilot.cache.auth.AuthUtils;
 import com.awesomecopilot.common.lang.context.ThreadContext;
-import com.awesomecopilot.security.constants.SecurityConstants;
+import com.awesomecopilot.oauth2.constants.SecurityConstants;
 import org.springframework.security.core.userdetails.AuthenticationUserDetailsService;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;

@@ -1,7 +1,7 @@
 package com.awesomecopilot.cloud.feign.aspect;
 
 import com.awesomecopilot.cache.JedisUtils;
-import jakarta.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;

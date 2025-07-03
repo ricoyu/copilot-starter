@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.web.ErrorProperties;
-import org.springframework.boot.autoconfigure.web.WebProperties.Resources;
+import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.autoconfigure.web.reactive.error.DefaultErrorWebExceptionHandler;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.web.reactive.error.ErrorAttributes;
@@ -24,6 +24,7 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
+import javax.annotation.Resources;
 import java.util.Map;
 
 /**
@@ -52,7 +53,7 @@ public class CopilotErrorWebExceptionHandler extends DefaultErrorWebExceptionHan
 	 * @param errorProperties    the error configuration properties
 	 * @param applicationContext the current application context
 	 */
-	public CopilotErrorWebExceptionHandler(ErrorAttributes errorAttributes, Resources properties,
+	public CopilotErrorWebExceptionHandler(ErrorAttributes errorAttributes, ResourceProperties properties,
 	                                       ErrorProperties errorProperties, ApplicationContext applicationContext) {
 		super(errorAttributes, properties, errorProperties, applicationContext);
 	}

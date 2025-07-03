@@ -1,0 +1,3 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+    com.awesomecopilot.boot.security.autoconfig.CopilotWebSecurityAutoConfig \
+    com.awesomecopilot.boot.security.autoconfig.CopilotSecurityFeatureAutoConfig
