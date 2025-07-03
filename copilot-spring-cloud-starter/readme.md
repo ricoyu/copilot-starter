@@ -108,7 +108,7 @@ copilot.sentinel.rest-exception-enabled: true
    
 3. 还会自动配置AuthFlowInterceptor, 用来实现微服务A通过feign调微服务B时候传递Origin请求头
 
-# 四 租户ID
+# 四 多租户
 
 CopilotSpringCloudAutoConfiguration里面配置了全局的TenantIdInterceptor, 不需要手工配置, 对所有Feign客户端生效, 从当前请求头中拿Tenant-Id, 如果有的话塞到Feign的请求头中传递下去, 因为这个只是检查一下有没有, 有的话传递下去, 所以不需要开关, 默认开启就是了
 

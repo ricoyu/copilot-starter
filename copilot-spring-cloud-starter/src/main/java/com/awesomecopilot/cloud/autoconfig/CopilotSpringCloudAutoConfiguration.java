@@ -2,6 +2,7 @@ package com.awesomecopilot.cloud.autoconfig;
 
 import com.alibaba.csp.sentinel.annotation.aspectj.SentinelResourceAspect;
 import com.awesomecopilot.cloud.feign.aspect.IdempotentAspect;
+import com.awesomecopilot.cloud.feign.interceptor.AuthorizationInterceptor;
 import com.awesomecopilot.cloud.feign.interceptor.IdempotentInterceptor;
 import com.awesomecopilot.cloud.feign.interceptor.TenantIdInterceptor;
 import com.awesomecopilot.cloud.filter.ExceptionFilter;
@@ -57,7 +58,12 @@ public class CopilotSpringCloudAutoConfiguration {
 	public IdempotentInterceptor idempotentInterceptor() {
 		return new IdempotentInterceptor();
 	}
-	
+
+	@Bean
+	public AuthorizationInterceptor authorizationInterceptor() {
+		return new AuthorizationInterceptor();
+	}
+
 	/**
 	 * 在需要做幂等性控制的接口方法上加@Idempotent注解, 这个切面提供做这个注解的支持
 	 * @return

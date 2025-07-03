@@ -83,7 +83,7 @@ public class PreAuthenticationFilter extends AbstractPreAuthenticatedProcessingF
 		if (isNotBlank(username)) {
 			ThreadContext.put(ThreadLocalSecurityConstants.ACCESS_TOKEN, accessToken); //方便PreAuthenticationUserDetailsService中拿到token
 			ThreadContext.put(ThreadLocalSecurityConstants.USERNAME, username);
-			
+
 			Map<String, Object> loginInfo = AuthUtils.loginInfo(accessToken, Map.class);
 			if (loginInfo != null) {
 				if (loginInfo.get(ThreadLocalSecurityConstants.USER_ID) != null) {

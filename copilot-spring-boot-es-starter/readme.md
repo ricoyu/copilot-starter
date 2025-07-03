@@ -12,12 +12,12 @@
 
 ```properties
 #cluster.name=nta
-#elastic.hosts=10.10.26.240:9300
-#elastic.rest.hosts=10.10.26.240:9200
+#elastic.hosts=192.168.100.101:9300,192.168.100.102:9300,,192.168.100.103:9300
+#elastic.rest.hosts=192.168.100.101:9200,192.168.100.102:9200,192.168.100.103:9200
         
 cluster.name=nta
-elastic.hosts=172.23.12.65:9300
-elastic.rest.hosts=172.23.12.65:9200
+elastic.hosts=192.168.100.101:9300,192.168.100.102:9300,,192.168.100.103:9300
+elastic.rest.hosts=192.168.100.101:9200,192.168.100.102:9200,192.168.100.103:9200
 ```
 
 
@@ -27,7 +27,7 @@ elastic.rest.hosts=172.23.12.65:9200
 1. application.yaml添加
 
    ```yaml
-   loser:
+   copilot:
      es:
        init: true
        templates:

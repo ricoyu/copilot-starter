@@ -1,5 +1,17 @@
 * 登录url: /login POST请求
+
 * 登出URL: /logout 哪个请求方法都可以
+
+* 指定URL白名单(不需要认证就可以访问的URL)
+
+  ```yaml
+  copilot:
+    security6:
+      white-list: 
+          - /oauth/**
+  ```
+
+  
 
 # 一 用户名密码登录
 
@@ -34,11 +46,13 @@
    import com.awesomecopilot.cloud.oauth.entity.SysUser;
    import com.awesomecopilot.common.lang.concurrent.Concurrent;
    import com.awesomecopilot.common.lang.concurrent.FutureResult;
+   import com.awesomecopilot.common.lang.context.ThreadContext;
    import com.awesomecopilot.orm.dao.CriteriaOperations;
    import com.awesomecopilot.orm.dao.SQLOperations;
-   import com.awesomecopilot.security6.authority.WildcardGrantedAuthority;
+   import com.awesomecopilot.security6.constants.ThreadLocalSecurityConstants;
    import org.springframework.beans.factory.annotation.Autowired;
    import org.springframework.security.core.GrantedAuthority;
+   import org.springframework.security.core.authority.SimpleGrantedAuthority;
    import org.springframework.security.core.userdetails.User;
    import org.springframework.security.core.userdetails.UserDetails;
    import org.springframework.security.core.userdetails.UserDetailsService;
@@ -83,19 +97,23 @@
    		});
    		Concurrent.await();
    
-   		List<SysRoleDTO> roles = roleFuture.get();
+   		ThreadContext.put(ThreadLocalSecurityConstants.USER_ID, sysUser.getId());
+   
+   				List<SysRoleDTO> roles = roleFuture.get();
    		List<SysPermissionDTO> permissionDTOs = permissionFuture.get();
    
    		Collection<GrantedAuthority> authorities = new ArrayList<>();
    		roles.stream().map((sysRole) -> {
    			String role = "ROLE_" + sysRole.getRoleCode().toUpperCase();
-   			GrantedAuthority grantedAuthority = new WildcardGrantedAuthority(role);
+   			//GrantedAuthority grantedAuthority = new WildcardGrantedAuthority(role);
+   			GrantedAuthority grantedAuthority = new SimpleGrantedAuthority(role);
    			return grantedAuthority;
    		}).forEach(authority -> authorities.add(authority));
    
    		List<String> permissions = new ArrayList<>();
    		permissionDTOs.stream().map((permission) -> {
-   			GrantedAuthority authority = new WildcardGrantedAuthority(permission.getCode());
+   			//GrantedAuthority authority = new WildcardGrantedAuthority(permission.getCode());
+   			GrantedAuthority authority = new SimpleGrantedAuthority(permission.getCode());
    			return authority;
    		}).forEach(authority -> authorities.add(authority));
    
@@ -105,6 +123,18 @@
    	}
    }
    ```
+   
+   * ThreadContext.put(ThreadLocalSecurityConstants.USER_ID, sysUser.getId());
+   
+     这是为了LoginSuccessHandler那边可以从ThreadLocal中拿到userId然后放到loginInfo里面, 存入Redis, 后续token认证时, PreAuthenticationFilter根据token从Redis中拿到loginInfo后, 发现如果有userId, 会把userId放入ThreadContext中方便业务代码拿到当前登录用户的Id
+   
+     ```java
+     ThreadContext.put(ThreadLocalSecurityConstants.USER_ID, loginInfo.get(ThreadLocalSecurityConstants.USER_ID));
+     ```
+   
+     
+   
+4. Token默认30分钟过期
 
 
 
@@ -199,6 +229,3 @@
 
 
 
-# 四 SecurityContextHolder 能力增强
-
-登录成功后我们可以通过SecurityContextHolder.getContext().getAuthentication()拿到UsernamePasswordAuthenticationToken对象, 但是注意到默认实现getContext()方法是从SecurityContextHolderStrategy中拿context的, 但是SecurityContextHolderStrategy的默认实现是基于ThreadLocal的, 所以如果Tomcat环境使用线程池的情况下, 后续携带token访问的时候SecurityContextHolder.getContext().getAuthentication()就大概率拿不到UsernamePasswordAuthenticationToken对象了, 所以我们这边在LoginSuccessHandler里面将token与UsernamePasswordAuthenticationToken关联起来设置到Redis中, 然后提供了一个RestoreAuthenticationFilter根据token从Redis中取回UsernamePasswordAuthenticationToken, 再塞进SecurityContextHolder.getContext()中

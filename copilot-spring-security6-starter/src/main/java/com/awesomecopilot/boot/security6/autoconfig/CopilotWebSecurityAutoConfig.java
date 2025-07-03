@@ -3,7 +3,6 @@ package com.awesomecopilot.boot.security6.autoconfig;
 import com.awesomecopilot.security6.endpoint.RestAuthenticationEntryPoint;
 import com.awesomecopilot.security6.expression.handler.WildcardMethodSecurityExpressionHandler;
 import com.awesomecopilot.security6.filter.PreAuthenticationFilter;
-import com.awesomecopilot.security6.filter.RestoreAuthenticationFilter;
 import com.awesomecopilot.security6.filter.SecurityExceptionFilter;
 import com.awesomecopilot.security6.filter.UsernamePasswordAuthenticationFilter;
 import com.awesomecopilot.security6.filter.VerifyCodeFilter;
@@ -37,7 +36,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationProvider;
 import org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter;
 
@@ -75,6 +73,18 @@ public class CopilotWebSecurityAutoConfig {
 		/*
 		 * 默认情况下，Spring Security 会启用 CSRF 保护，而表单登录需要 CSRF token。
 		 * 如果不关闭, 到了UsernamePasswordAuthenticationFilter那边, 当前的url已经被重定向为/error了, 导致无法登录
+		 *
+		 * 跨站请求伪造 (英語：Cross-site request forgery), 也被称为 one-click attack 或者 session riding, 通常缩写为 CSRF 或者 XSRF, 是一种挟制用户在当前已登录的Web应用程序上执行非本意的操作的攻击方法。
+		 *
+		 * 假如一家银行用以运行转账操作的URL地址如下: https://bank.example.com/withdraw?account=AccoutName&amount=1000&for=PayeeName
+		 *
+		 * 那么, 一个恶意攻击者可以在另一个网站上放置如下代码: `<img src="https://bank.example.com/withdraw?account=Alice&amount=1000&for=Badman" />`
+		 *
+		 * 如果有账户名为Alice的用户访问了恶意站点, 而她之前刚访问过银行不久, 登录信息尚未过期, 那么她就会损失1000资金。
+		 *
+		 * 这种恶意的网址可以有很多种形式, 藏身于网页中的许多地方。此外, 攻击者也不需要控制放置恶意网址的网站。例如他可以将这种地址藏在论坛, 博客等任何用户生成内容的网站中。这意味着如果服务端没有合适的防御措施的话, 用户即使访问熟悉的可信网站也有受攻击的危险。
+		 *
+		 * Spring Security 4.0之后, 引入了CSRF
 		 */
 		http.csrf(AbstractHttpConfigurer::disable);
 		//Spring Security不会创建或使用HTTP会话（HttpSession）来存储任何与用户身份验证相关的信息。
@@ -103,7 +113,6 @@ public class CopilotWebSecurityAutoConfig {
 		http.addFilterBefore(new HttpServletRequestRepeatedReadFilter(), WebAsyncManagerIntegrationFilter.class);
 		http.addFilterBefore(preAuthenticationFilter(authenticationManager(http)),
 						UsernamePasswordAuthenticationFilter.class);
-		http.addFilterBefore(new RestoreAuthenticationFilter(), LogoutFilter.class);
 		http.addFilterAt(usernamePasswordAuthenticationFilter(authenticationManager(http)),
 				org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
 

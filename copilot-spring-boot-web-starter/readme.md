@@ -303,7 +303,7 @@ copilot.filter.repeated-read: true
 
 # 十二 多租户支持
 
-```
+```yaml
 copilot:
   filter:
     tenant:

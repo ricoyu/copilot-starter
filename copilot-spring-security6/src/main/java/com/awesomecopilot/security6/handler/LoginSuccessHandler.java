@@ -8,6 +8,7 @@ import com.awesomecopilot.common.lang.vo.Result;
 import com.awesomecopilot.common.lang.vo.Results;
 import com.awesomecopilot.common.spring.utils.ServletUtils;
 import com.awesomecopilot.json.jackson.JacksonUtils;
+import com.awesomecopilot.security6.constants.ThreadLocalSecurityConstants;
 import com.awesomecopilot.web.utils.RestUtils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -58,7 +59,6 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 				.getAuthorities();
 		log.info("用户: {} 的权限列表: \n{}", username, JacksonUtils.toPrettyJson(authorities));
 		String ip = ServletUtils.getRemoteRealIP(request);
-		AuthUtils.setAuthentication(accessToken, SecurityContextHolder.getContext().getAuthentication());
 		doLogin(response, accessToken, username, userDetails, authorities, ip, false);
 	}
 	
@@ -75,6 +75,8 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 		} else {
 			loginInfo.put("ip", ip);
 		}
+		Object UserId = ThreadContext.get(ThreadLocalSecurityConstants.USER_ID);
+		loginInfo.put("userId", UserId);
 
 		long expires = 30L;
 		AuthUtils.login(username, accessToken, expires, TimeUnit.MINUTES, userDetails, authorities, loginInfo, singleSignOn);
