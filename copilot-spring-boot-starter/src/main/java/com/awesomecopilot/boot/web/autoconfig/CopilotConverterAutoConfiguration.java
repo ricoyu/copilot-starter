@@ -1,7 +1,11 @@
 package com.awesomecopilot.boot.web.autoconfig;
 
 import com.awesomecopilot.boot.converter.LocalTimeConverter;
+import com.awesomecopilot.boot.web.autoconfig.properties.CopilotJacksonProperties;
+import com.awesomecopilot.boot.web.autoconfig.properties.CopilotOrmProperties;
+import com.awesomecopilot.boot.web.autoconfig.properties.CopilotOrmSnowflakeProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -16,6 +20,7 @@ import org.springframework.context.annotation.Configuration;
  * @version 1.0
  */
 @Configuration
+@EnableConfigurationProperties({CopilotOrmSnowflakeProperties.class, CopilotOrmProperties.class, CopilotJacksonProperties.class})
 public class CopilotConverterAutoConfiguration {
 	
 	/**
