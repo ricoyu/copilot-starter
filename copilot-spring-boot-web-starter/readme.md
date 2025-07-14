@@ -325,3 +325,32 @@ copilot:
 # 十三 接口签名
 
 提供校验接口签名功能, 防止接口及Token泄漏后被黑客随意调用
+
+开启接口验签配置项:
+
+```properties
+copilot.mvc.api-sign.enabled=true
+```
+
+
+
+客户端需要做的:
+
+* 拿到当前读时间戳放到变量timestamp, 如果考虑客户端与服务端时钟不同步, 可以请求服务端/timestamp获取服务端当前时间戳
+* 生成一个随机串放到变量nonce
+* 拿到当前请求接口的uri
+* 按照格式: message = `uri=${uri}&timestamp=${timestamp}&nonce=${nonce}`;
+* 然后用sha256哈希对其生成摘要, 设置到Signature请求头
+* 设置请求头Timestamp
+* 设置请求头Nonce
+* 设置请求头Signature
+
+服务端处理:
+
+* 拿到当前请求的uri部分
+* 拿到Timestamp请求头值
+* 拿到Nonce请求头值
+* 拿到Signature请求头值
+* 按照顺序拼装字符串message = `uri=${uri}&timestamp=${timestamp}&nonce=${nonce}`;
+* 对message用sha256生成摘要
+* 比如生成的摘要与Signature请求头值是否匹配
