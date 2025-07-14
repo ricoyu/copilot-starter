@@ -58,7 +58,8 @@ public class ApiSignFilter extends OncePerRequestFilter {
 			message.append(header);
 		}
 
-		String providedSignature = headers[headers.length-1];
+		String SignatureHeader = headers[headers.length - 1];
+		String providedSignature = ServletUtils.getHeader(SignatureHeader);
 		String signature = HashUtils.sha256(message.toString());
 
 		if (providedSignature.equals(signature)) {
