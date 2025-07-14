@@ -1,5 +1,6 @@
 package com.awesomecopilot.boot.web.autoconfig;
 
+import com.awesomecopilot.boot.web.filter.ApiSignFilter;
 import com.awesomecopilot.boot.web.filter.TenantIdFilter;
 import com.awesomecopilot.boot.web.intercepter.IdempotentIntercepter;
 import com.awesomecopilot.web.advice.GlobalBindingAdvice;
@@ -148,6 +149,11 @@ public class CopilotMvcConfiguration implements WebMvcConfigurer {
 		source.registerCorsConfiguration("/**", config);
 		
 		return new CorsWebFilter(source);
+	}
+
+	@Bean
+	public ApiSignFilter apiSignFilter() {
+		return new ApiSignFilter();
 	}
 	
 /*	@Bean
