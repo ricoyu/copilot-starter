@@ -22,7 +22,7 @@ public class CopilotMvcProperties {
 
 	private boolean restExceptionAdviceEnabled = true;
 
-	private APISign apiSign;
+	private APISign apiSign = new APISign(); //要初始化一下, 不然application.yaml没有配置这项的话, 拿到的apiSign就是null, 容易出空指针异常
 
 	public Integer getIdemtotentTokenTtl() {
 		return idemtotentTokenTtl;
