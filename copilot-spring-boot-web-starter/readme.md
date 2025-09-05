@@ -354,3 +354,9 @@ copilot.mvc.api-sign.enabled=true
 * 按照顺序拼装字符串message = `uri=${uri}&timestamp=${timestamp}&nonce=${nonce}`;
 * 对message用sha256生成摘要
 * 比如生成的摘要与Signature请求头值是否匹配
+
+
+
+# 十四 分页支持
+
+Controller方法DTO继承 com.awesomecopilot.common.lang.dto.PageDTO

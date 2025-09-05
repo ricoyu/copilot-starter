@@ -12,7 +12,7 @@ import java.util.UUID;
 
 /**
  * 实现接口幂等性; 这个是配置在调用方的, 在调用其他服务的时候往Idempotent请求头里面塞UUID, 只有POST PUT方法会拦截
- * 接口被调用放的Controller方法要加@Idempotent注解, 配置好redis.properties, 我会通过AOP拦截加了@Idempotent注解的方法调用, 从Request里面拿到
+ * 接口被调用方的Controller方法要加@Idempotent注解, 配置好redis.properties, 我会通过AOP拦截加了@Idempotent注解的方法调用, 从Request里面拿到
  * Idempotent请求头, 然后往Redis的HyperLogLog里面塞, 塞成功过过了就表示没有重复调用, 塞失败了就不允许重复调用
  * <p>
  * Copyright: (C), 2023-03-05 17:07

@@ -104,3 +104,44 @@ spring.main.allow-circular-references=true
 CopilotFilterProperties properties = (CopilotFilterProperties) ApplicationContextHolder.getBean(CopilotFilterProperties.class);
 ```
 
+
+
+# 七 自动添加 逻辑删除 条件
+
+引入Maven依赖后
+
+```xml
+<dependency>
+    <groupId>com.awesomecopilot</groupId>
+    <artifactId>copilot-spring-boot-starter</artifactId>
+</dependency>
+```
+
+默认就支持逻辑删除, 每条SQL后面都会自动加上deleted=0
+
+SQLOperations 和 CriteriaOperations两个接口都支持
+
+配置方法:
+
+1. 添加拦截器
+
+   ```yaml
+   spring:
+     jpa:
+       properties:
+         hibernate:
+           session_factory:
+             statement_inspector: com.awesomecopilot.cloud.product.config.DeletedTenantIdConditionInterceptor
+   ```
+
+2. 显式关闭逻辑删除功能
+
+   application.yaml配置
+
+   ```yaml
+   copilot:
+     orm:
+       logicalDelete:
+         enabled: false
+   ```
+

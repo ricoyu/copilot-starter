@@ -26,8 +26,7 @@ public class LoginFailureHandler implements AuthenticationFailureHandler {
 	@Override
 	public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
 	                                    AuthenticationException e) throws IOException, ServletException {
-
-		String username = ThreadContext.get(CopilotSecurityConstants.SPRING_SECURITY_FORM_USERNAME_KEY);
+		log.error("", e);
 
 		ErrorType errorType = SpringSecurityExceptions.errorType(e.getClass());
 		if (errorType == null) {

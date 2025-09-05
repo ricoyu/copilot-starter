@@ -1,4 +1,4 @@
-* 登录url: /login POST请求
+* SpringSecurity默认登录url: /login POST请求
 
 * 登出URL: /logout 哪个请求方法都可以
 
@@ -11,7 +11,7 @@
           - /oauth/**
   ```
 
-  
+* 登录失败处理 LoginFailureHandler
 
 # 一 用户名密码登录
 
@@ -40,6 +40,8 @@
 
    用户的角色和权限都要查询出来, 角色转大写后加上ROLE_前缀然后在转成WildcardGrantedAuthority
 
+   这个会自动注入到CopilotWebSecurityAutoConfig, 然后在这个配置类里面加入SpringSecurity认证流程
+   
    ```java
    import com.awesomecopilot.cloud.oauth.dto.SysPermissionDTO;
    import com.awesomecopilot.cloud.oauth.dto.SysRoleDTO;
