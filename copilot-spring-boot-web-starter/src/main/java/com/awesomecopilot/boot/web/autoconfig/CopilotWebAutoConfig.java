@@ -1,6 +1,8 @@
 package com.awesomecopilot.boot.web.autoconfig;
 
 import com.awesomecopilot.boot.web.intercepter.RateLimitIntercepter;
+import com.awesomecopilot.common.spring.aspect.PageResultAspect;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -22,5 +24,13 @@ public class CopilotWebAutoConfig implements WebMvcConfigurer {
 	public void addInterceptors(InterceptorRegistry registry) {
 		registry.addInterceptor(new RateLimitIntercepter()); //实现应用限流
 		WebMvcConfigurer.super.addInterceptors(registry);
+	}
+
+	/**
+	 * 把方法参数里面的Page对象回填到方法返回值Result里面
+	 */
+	@Bean
+	public PageResultAspect pageResultAspect() {
+		return new PageResultAspect();
 	}
 }

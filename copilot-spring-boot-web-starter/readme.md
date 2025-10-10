@@ -359,4 +359,100 @@ copilot.mvc.api-sign.enabled=true
 
 # 十四 分页支持
 
-Controller方法DTO继承 com.awesomecopilot.common.lang.dto.PageDTO
+1. 方式1
+
+   * Controller方法参数DTO继承 com.awesomecopilot.common.lang.dto.PageDTO
+
+   * 前端传递的分页查询包含pageNum, pageSize两个参数, 比如
+
+     ```json
+     {
+         "name": "22",
+         "status": 1,
+         "pageNum": 2,
+         "pageSize": 5
+     }
+     ```
+
+   * 然后在传递给DAO层进行分页查询的时候通过dto.getPage()获取分页对象传递给DAO层的分页参数
+
+2. 方式2
+
+   * Controller方法参数DTO持有一个Page类型的属性
+
+   * 前端分页查询参数包含一个page对象属性, 比如
+
+     ```json
+     {
+       "name": "22",
+       "status": 1,
+       "page": {
+         "pageNum": 2,
+         "pageSize": 5
+       }
+     }
+     ```
+
+   * 拿到page对象传递给DAO层的分页方法
+
+3. Controller方法正常返回Result对象, result对象是包含一个Page属性的, 程序员自己不需要将page对象回填进最终返回的result对象里面, 为了省力, 框架提供了一个PageResultAspect将page对象回填进result里面
+
+代码示例:
+
+1. Controller方法
+
+   ```java
+   @PostMapping("/list")
+   public Result<List<SmsSeckillSession>> list(@RequestBody SmsSeckillSessionQueryDTO smsSeckillSessionQueryDTO) {
+     List<SmsSeckillSession> smsSeckillSessions = seckillPromotionService.queryPage(smsSeckillSessionQueryDTO);
+     Result<List<SmsSeckillSession>> result =
+         Results.<List<SmsSeckillSession>>success().data(smsSeckillSessions).build();
+     //在返回前PageResultAspect会将更新了分页结果的page对象set进result
+     return result;
+   }
+   ```
+
+2. Service方法
+
+   ```java
+   public List<SmsSeckillSession> queryPage(SmsSeckillSessionQueryDTO smsSeckillSessionQueryDTO) {
+     CriteriaQueryBuilder queryBuilder = criteriaOperations.query(SmsSeckillSession.class);
+     if (isNotBlank(smsSeckillSessionQueryDTO.getName())) {
+       queryBuilder.like("name", smsSeckillSessionQueryDTO.getName());
+     }
+     if (smsSeckillSessionQueryDTO.getStatus() != null) {
+       queryBuilder.eq("status", smsSeckillSessionQueryDTO.getStatus());
+     }
+     queryBuilder.desc("createTime");
+   
+     return queryBuilder.findPage(smsSeckillSessionQueryDTO.getPage());
+   }
+   ```
+
+3. 返回结果示例
+
+   ```json
+   {
+       "code": "0",
+       "status": "success",
+       "message": null,
+       "page": {
+           "pageNum": 1,
+           "pageSize": 5,
+           "total": 1,
+           "totalPages": 1
+       },
+       "data": [
+           {
+               "createTime": "2025-09-12 21:31:45",
+               "endTime": "2025-09-12 21:30:00",
+               "id": 1,
+               "name": "22点场",
+               "startTime": "2025-09-12 21:00:00",
+               "status": true
+           }
+       ]
+   }
+   ```
+
+   
