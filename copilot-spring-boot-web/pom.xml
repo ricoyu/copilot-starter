@@ -34,12 +34,11 @@
             <groupId>com.awesomecopilot</groupId>
             <artifactId>copilot-web</artifactId>
         </dependency>
-        <!--<dependency>
+        <dependency>
             <groupId>org.apache.tomcat.embed</groupId>
             <artifactId>tomcat-embed-core</artifactId>
-            <version>9.0.34</version>
             <scope>provided</scope>
-        </dependency>-->
+        </dependency>
         <!--<dependency>
             <groupId>com.alibaba.csp</groupId>
             <artifactId>sentinel-spring-webmvc-adapter</artifactId>

@@ -1,7 +1,9 @@
 package com.awesomecopilot.boot.web.autoconfig;
 
+import com.awesomecopilot.boot.web.autoconfig.CopilotMvcProperties.CORS;
 import com.awesomecopilot.boot.web.filter.ApiSignFilter;
 import com.awesomecopilot.boot.web.filter.TenantIdFilter;
+import com.awesomecopilot.boot.web.filter.TomcatThreadPoolStatisticFilter;
 import com.awesomecopilot.boot.web.intercepter.IdempotentIntercepter;
 import com.awesomecopilot.web.advice.GlobalBindingAdvice;
 import com.awesomecopilot.web.advice.RestExceptionAdvice;
@@ -14,6 +16,7 @@ import com.awesomecopilot.web.resolver.LocalDateTimeArgumentResolver;
 import com.awesomecopilot.web.resolver.LocalTimeArgumentResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -23,6 +26,7 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.filter.OrderedCharacterEncodingFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -65,6 +69,10 @@ public class CopilotMvcConfiguration implements WebMvcConfigurer {
 	@Value("${copilot.filter.tenant.mandatory:false}")
 	private boolean tenantIdMandatory=false;
 
+	@Lazy
+	@Autowired
+	private CopilotMvcProperties copilotMvcProperties;
+
 	/**
 	 * 支持Controller方法参数里面日期类型的绑定
 	 * @return
@@ -97,7 +105,14 @@ public class CopilotMvcConfiguration implements WebMvcConfigurer {
 	public RestExceptionAdvice restExceptionAdvice() {
 		return new RestExceptionAdvice();
 	}
-	
+
+	@Bean
+	@ConditionalOnProperty(prefix = "copilot.filter", value = "pool-statistic", havingValue = "true", matchIfMissing = false)
+	public TomcatThreadPoolStatisticFilter poolStatisticFilter() {
+		return new TomcatThreadPoolStatisticFilter();
+
+	}
+
 	@Bean
 	@Primary
 	public CharacterEncodingFilter characterEncodingFilter() {
@@ -125,30 +140,6 @@ public class CopilotMvcConfiguration implements WebMvcConfigurer {
 		FilterRegistrationBean registrationBean = new FilterRegistrationBean();
 		registrationBean.setFilter(new HttpServletRequestRepeatedReadFilter());
 		return registrationBean;
-	}
-	
-	/**
-	 * @return
-	 */
-	@Bean
-	@ConditionalOnWebApplication(type = REACTIVE)
-	public CorsWebFilter corsFilter() {
-		CorsConfiguration config = new CorsConfiguration();
-		// 允许cookies跨域
-		config.setAllowCredentials(true);
-		// 允许向该服务器提交请求的URI, *表示全部允许, 在SpringMVC中, 如果设成*, 会自动转成当前请求头中的Origin
-		config.addAllowedOrigin("*");
-		// 允许访问的头信息,*表示全部
-		config.addAllowedHeader("*");
-		// 预检请求的缓存时间(秒), 即在这个时间段里, 对于相同的跨域请求不会再预检了
-		config.setMaxAge(18000L);
-		// 允许提交请求的方法, *表示全部允许
-		config.addAllowedMethod("*");
-		
-		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource(new PathPatternParser());
-		source.registerCorsConfiguration("/**", config);
-		
-		return new CorsWebFilter(source);
 	}
 
 	@Bean
@@ -183,11 +174,16 @@ public class CopilotMvcConfiguration implements WebMvcConfigurer {
 	
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {
+		CORS cors = copilotMvcProperties.getCors();
+		if (!cors.isEnabled()) {
+			return;
+		}
 		registry.addMapping("/**")
-				.allowedOriginPatterns("*")
-				.allowedHeaders("*")
-				.allowedMethods("*")
-				.allowCredentials(true);
+				.allowedOriginPatterns(cors.getAllowedOrigins().toArray(new String[0]))
+				.allowedHeaders(cors.getAllowedHeaders().toArray(new String[0]))
+				.allowedMethods(cors.getAllowedMethods().toArray(new String[0]))
+				.allowCredentials(cors.isAllowCredentials())
+				.maxAge(cors.getMaxAge());
 	}
 	
 	@Override

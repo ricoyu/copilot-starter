@@ -25,6 +25,11 @@ public class CopilotFilterProperties {
 
 	private Tenant tenant;
 
+	/**
+	 * 是否注册TomcatThreadPoolStatisticFilter, 以开启Tomcat线程池统计功能
+	 */
+	private boolean poolStatistic;
+
 	public boolean isRepeatedRead() {
 		return repeatedRead;
 	}
@@ -39,6 +44,14 @@ public class CopilotFilterProperties {
 
 	public void setTenant(Tenant tenant) {
 		this.tenant = tenant;
+	}
+
+	public boolean isPoolStatistic() {
+		return poolStatistic;
+	}
+
+	public void setPoolStatistic(boolean poolStatistic) {
+		this.poolStatistic = poolStatistic;
 	}
 
 	public static class Tenant {

@@ -1,3 +1,5 @@
+# 一 自定义route
+
 1. 注册了一个 TimeBetween route, 用法示例:
 
    ```yaml
@@ -11,15 +13,19 @@
                - TimeBetween=7:00, 17:38
    ```
 
-2. 注册了GatewayBlockRequestHandler统一处理限流异常
 
-3. 注册了LoserErrorWebExceptionHandler**统一处理网关层异常**, 这个Handler又是委托给GatewayExceptionHandlerAdvice去真正处理异常并返回REST结果
 
-4. 网关层application.yml要配置clientId, clientSecret, authServerName
+# 二 异常统一处理
 
-5. 注册了SentinelGatewayFilter, 干嘛用的忘记了
+1. 注册了GatewayBlockRequestHandler统一处理限流异常
 
-6. 如果走网关层认证以及采用了JWT Token, 需要做如下配置
+2. 注册了LoserErrorWebExceptionHandler**统一处理网关层异常**, 这个Handler又是委托给GatewayExceptionHandlerAdvice去真正处理异常并返回REST结果
+
+3. 网关层application.yml要配置clientId, clientSecret, authServerName
+
+4. 注册了SentinelGatewayFilter, 干嘛用的忘记了
+
+5. 如果走网关层认证以及采用了JWT Token, 需要做如下配置
 
    ```yaml
    loser:
@@ -44,15 +50,17 @@
          jwt-token: true
          should-skip-urls: /user/info
    ```
+
    
+
+   # 三 允许跨域配置
+
    
+
    
+
    
-   
-   
-   
-   
-   
+
    
 
 

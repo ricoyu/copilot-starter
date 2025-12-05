@@ -1,14 +1,13 @@
 package com.awesomecopilot.cloud.gateway.auth.filter;
 
 import com.awesomecopilot.common.lang.errors.ErrorTypes;
-import com.awesomecopilot.cloud.gateway.auth.properties.GatewayAuthProperties;
+import com.awesomecopilot.cloud.gateway.auth.properties.CopilotGatewayProperties;
 import com.awesomecopilot.cloud.gateway.exception.GatewayException;
 import com.awesomecopilot.cloud.gateway.auth.common.TokenInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.cloud.gateway.config.GatewayProperties;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -28,13 +27,13 @@ import reactor.core.publisher.Mono;
 import java.security.PublicKey;
 
 @Slf4j
-@EnableConfigurationProperties(value= {GatewayAuthProperties.class, GatewayProperties.class})
+@EnableConfigurationProperties(value= {CopilotGatewayProperties.class, org.springframework.cloud.gateway.config.GatewayProperties.class})
 public class AuthenticationFilter implements GlobalFilter, Ordered {
 	
 	private PublicKey publicKey;
 	
 	@Autowired
-	private GatewayAuthProperties gatewayAuthProperties;
+	private CopilotGatewayProperties gatewayAuthProperties;
 	private static final AntPathMatcher ANT_PATH_MATCHER = new AntPathMatcher();
 	
 	@Autowired

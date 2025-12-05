@@ -1,7 +1,7 @@
 package com.awesomecopilot.cloud.gateway.auth.filter;
 
 import com.awesomecopilot.common.lang.errors.ErrorTypes;
-import com.awesomecopilot.cloud.gateway.auth.properties.GatewayAuthProperties;
+import com.awesomecopilot.cloud.gateway.auth.properties.CopilotGatewayProperties;
 import com.awesomecopilot.cloud.gateway.exception.GatewayException;
 import com.awesomecopilot.cloud.gateway.auth.common.TokenInfo;
 import com.awesomecopilot.common.spring.utils.ServletUtils;
@@ -28,14 +28,14 @@ import reactor.core.publisher.Mono;
  * @version 1.0
  */
 @Slf4j
-@EnableConfigurationProperties(value= {GatewayAuthProperties.class})
+@EnableConfigurationProperties(value= {CopilotGatewayProperties.class})
 public class AuthorizationFilter implements GlobalFilter, Ordered {
 
 	@Value("${copilot.security6.user-pass-login.login-url:/login}")
 	private String loginUrl;
 
 	@Autowired
-	private GatewayAuthProperties gatewayAuthProperties;
+	private CopilotGatewayProperties gatewayAuthProperties;
 	private static final AntPathMatcher ANT_PATH_MATCHER = new AntPathMatcher();
 	
 	@Override

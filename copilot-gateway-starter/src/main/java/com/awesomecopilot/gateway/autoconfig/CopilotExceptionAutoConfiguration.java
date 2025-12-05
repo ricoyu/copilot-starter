@@ -2,7 +2,6 @@ package com.awesomecopilot.gateway.autoconfig;
 
 import com.awesomecopilot.cloud.gateway.advice.GatewayExceptionHandlerAdvice;
 import com.awesomecopilot.cloud.gateway.handler.CopilotErrorWebExceptionHandler;
-import com.awesomecopilot.cloud.gateway.properties.CopilotGatewayExceptionProperties;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -40,8 +39,7 @@ import java.util.List;
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.REACTIVE)
 @ConditionalOnClass(WebFluxConfigurer.class)
 @AutoConfigureBefore(WebFluxAutoConfiguration.class)
-//@EnableConfigurationProperties({ServerProperties.class, Resources.class, CopilotGatewayExceptionProperties.class})
-@EnableConfigurationProperties({ServerProperties.class,CopilotGatewayExceptionProperties.class})
+@EnableConfigurationProperties({ServerProperties.class})
 public class CopilotExceptionAutoConfiguration {
 	
 	private ServerProperties serverProperties;

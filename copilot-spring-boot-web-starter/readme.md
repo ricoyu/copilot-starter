@@ -332,8 +332,6 @@ copilot:
 copilot.mvc.api-sign.enabled=true
 ```
 
-
-
 客户端需要做的:
 
 * 拿到当前读时间戳放到变量timestamp, 如果考虑客户端与服务端时钟不同步, 可以请求服务端/timestamp获取服务端当前时间戳
@@ -399,7 +397,53 @@ copilot.mvc.api-sign.enabled=true
 
 代码示例:
 
-1. Controller方法
+1. DTO
+
+   ```java
+   package com.awesomecopilot.mall.coupon.dto;
+   
+   import com.awesomecopilot.common.lang.dto.PageDTO;
+   import com.awesomecopilot.common.lang.vo.Page;
+   import jakarta.validation.constraints.NotEmpty;
+   import jakarta.validation.constraints.NotNull;
+   import jakarta.validation.constraints.Size;
+   import lombok.Data;
+   
+   import java.time.LocalDateTime;
+   
+   /**
+    * 秒杀活动场次
+    * 对应数据库表：sms_seckill_session
+    * <p/>
+    * Copyright: Copyright (c) 2025-09-12 19:55
+    * <p/>
+    * Company: Sexy Uncle Inc.
+    * <p/>
+   
+    * @author Rico Yu  ricoyu520@gmail.com
+    * @version 1.0
+    */
+   @Data
+   public class SmsSeckillSessionQueryDTO extends PageDTO {
+   
+   
+       /**
+        * 场次名称
+        */
+       private String name;
+   
+       /**
+        * 启用状态
+        */
+   
+       private Boolean status;
+   
+   }
+   ```
+
+   
+
+2. Controller方法
 
    ```java
    @PostMapping("/list")
@@ -412,7 +456,7 @@ copilot.mvc.api-sign.enabled=true
    }
    ```
 
-2. Service方法
+3. Service方法
 
    ```java
    public List<SmsSeckillSession> queryPage(SmsSeckillSessionQueryDTO smsSeckillSessionQueryDTO) {
@@ -429,7 +473,7 @@ copilot.mvc.api-sign.enabled=true
    }
    ```
 
-3. 返回结果示例
+4. 返回结果示例
 
    ```json
    {
@@ -455,4 +499,31 @@ copilot.mvc.api-sign.enabled=true
    }
    ```
 
-   
+
+# 十五 添加了打印SpringBoot Tomcat线程池的filter
+
+1. 开关
+
+   ```yaml
+   copilot.filter.pool-statistic: true
+   ```
+
+2. 对应注册的filter
+
+   TomcatThreadPoolStatisticFilter
+
+3. 返回线程池统计情况的URL
+
+   http://localhost:8080/tomcat/threadpool
+
+
+
+# 十六 做了CORS跨域配置
+
+如果用了网关, 记得CORS只在网关侧控制, 微服务端要关掉, 配置
+
+```yaml
+copilot.mvc.cors.enabled: false  #默认为false
+```
+
+否则浏览器会报CORS error

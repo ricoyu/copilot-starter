@@ -1,7 +1,7 @@
 package com.awesomecopilot.gateway.sentinel.autoconfig;
 
+import com.awesomecopilot.cloud.gateway.auth.properties.CopilotGatewayProperties;
 import com.awesomecopilot.gateway.sentinel.handler.GatewayBlockRequestHandler;
-import com.awesomecopilot.gateway.sentinel.properties.CopilotGatewaySentinelProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -18,7 +18,7 @@ import org.springframework.context.annotation.Configuration;
  * @version 1.0
  */
 @Configuration
-@EnableConfigurationProperties(CopilotGatewaySentinelProperties.class)
+@EnableConfigurationProperties(CopilotGatewayProperties.class)
 public class CopilotGatewaySentinelAutoConfig {
 	
 	@Bean

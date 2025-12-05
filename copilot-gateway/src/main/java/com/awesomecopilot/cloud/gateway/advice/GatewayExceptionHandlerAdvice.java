@@ -1,11 +1,10 @@
 package com.awesomecopilot.cloud.gateway.advice;
 
 import com.awesomecopilot.cloud.gateway.exception.GatewayException;
-import com.awesomecopilot.cloud.gateway.properties.CopilotGatewayExceptionProperties;
 import com.awesomecopilot.common.lang.vo.Result;
 import com.awesomecopilot.common.lang.vo.Results;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.support.NotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -16,12 +15,10 @@ import static com.awesomecopilot.boot.enums.SystemError.GATEWAY_ERROR;
 import static com.awesomecopilot.boot.enums.SystemError.GATEWAY_NOT_FOUND_SERVICE;
 import static com.awesomecopilot.boot.enums.SystemError.SYSTEM_ERROR;
 
-@Slf4j
 public class GatewayExceptionHandlerAdvice {
-	
-	@Autowired
-	private CopilotGatewayExceptionProperties copilotGatewayExceptionProperties;
-	
+
+	private static final Logger log = LoggerFactory.getLogger(GatewayExceptionHandlerAdvice.class);
+
 	@ExceptionHandler(value = {ResponseStatusException.class})
 	public Result handle(ResponseStatusException e) {
 		log.error("response status exception:{}", e);

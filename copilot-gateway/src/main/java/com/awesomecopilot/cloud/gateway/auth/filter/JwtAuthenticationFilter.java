@@ -1,6 +1,6 @@
 package com.awesomecopilot.cloud.gateway.auth.filter;
 
-import com.awesomecopilot.cloud.gateway.auth.properties.GatewayAuthProperties;
+import com.awesomecopilot.cloud.gateway.auth.properties.CopilotGatewayProperties;
 import com.awesomecopilot.cloud.gateway.client.CopilotRestTemplate;
 import com.awesomecopilot.cloud.gateway.exception.GatewayException;
 import com.awesomecopilot.codec.Base64Utils;
@@ -59,7 +59,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered, Initializ
 	private CopilotRestTemplate copilotRestTemplate;
 	
 	@Autowired
-	private GatewayAuthProperties gatewayAuthProperties;
+	private CopilotGatewayProperties gatewayAuthProperties;
 	
 	private PublicKey publicKey;
 	

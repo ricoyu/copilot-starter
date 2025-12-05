@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * <p/>
  * Company: Sexy Uncle Inc.
  * <p/>
+ *
  * @author Rico Yu  ricoyu520@gmail.com
  * @version 1.0
  */
@@ -28,7 +29,9 @@ public class CopilotOriginParser implements RequestOriginParser {
 	public String parseOrigin(HttpServletRequest request) {
 		String header = sentinelProperties.getAuthRule().getHeader();
 		String headerValue = request.getHeader(header);
-		log.info("请求头 {} 的值为 {}", header, headerValue);
+		if (log.isDebugEnabled()) {
+			log.debug("请求头 {} 的值为 {}", header, headerValue);
+		}
 		return headerValue;
 	}
 }

@@ -1,7 +1,7 @@
 package com.awesomecopilot.gateway.autoconfig;
 
+import com.awesomecopilot.cloud.gateway.auth.properties.CopilotGatewayProperties;
 import com.awesomecopilot.cloud.gateway.predicate.TimeBetweenRoutePredicateFactory;
-import com.awesomecopilot.gateway.properties.CopilotGatewayProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
