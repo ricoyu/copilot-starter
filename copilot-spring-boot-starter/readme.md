@@ -145,3 +145,31 @@ SQLOperations 和 CriteriaOperations两个接口都支持
          enabled: false
    ```
 
+
+
+# 八 Redis缓存延迟双删支持
+
+1. application.yaml
+
+   开关要开启
+
+   ```yaml
+   copilot:
+     cache:
+       enabled: true
+   ```
+
+2. src/main/resources下放一个redis.properties文件
+
+   ```properties
+   redis.host=192.168.100.161
+   redis.password=deepdata$
+   ```
+
+3. 业务方法上标注注解, 要同时删多个key的话用逗号隔开即可
+
+   ```java
+   @CacheEvict(keys = "menu_id_name_map")
+   ```
+
+   
