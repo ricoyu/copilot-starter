@@ -9,7 +9,7 @@
     </parent>
     <artifactId>copilot-spring-boot</artifactId>
     <version>${project.parent.version}</version>
-    <name>copilot SpringBoot Support</name>
+    <name>Copilot SpringBoot Support</name>
 
     <properties>
         <java.version>17</java.version>

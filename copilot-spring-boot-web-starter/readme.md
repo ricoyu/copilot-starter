@@ -334,7 +334,7 @@ copilot.mvc.api-sign.enabled=true
 
 客户端需要做的:
 
-* 拿到当前读时间戳放到变量timestamp, 如果考虑客户端与服务端时钟不同步, 可以请求服务端/timestamp获取服务端当前时间戳
+* 拿到当前时间戳放到变量timestamp, 如果考虑客户端与服务端时钟不同步, 可以请求服务端/timestamp获取服务端当前时间戳
 * 生成一个随机串放到变量nonce
 * 拿到当前请求接口的uri
 * 按照格式: message = `uri=${uri}&timestamp=${timestamp}&nonce=${nonce}`;
@@ -499,8 +499,9 @@ copilot.mvc.api-sign.enabled=true
    }
    ```
 
-
 # 十五 添加了打印SpringBoot Tomcat线程池的filter
+
+目前只支持 URL 参数、表单form-data/x-www-form-urlencoded格式的参数; request body还不支持
 
 1. 开关
 
@@ -527,3 +528,28 @@ copilot.mvc.cors.enabled: false  #默认为false
 ```
 
 否则浏览器会报CORS error
+
+
+
+# 十七 防XSS攻击
+
+1. 配置
+
+   ```properties
+   copilot.filter.xss-enabled=true #必须显式配置
+   ```
+
+2. 开启配置后会注册一个XssFilter对输入参数值进行危险HTML标签的替换, 比如script标签, 但是不会对普通HTML标签做转义, 比如前端提交<a href=xxx/>, 后端拿到的还是原样的<a href=xxx/>
+
+3. 输出的时候对HTML标签做转义, 比如输出JSON数据包含<a href=xxx/>会被转义成 `&lt;a href=xxx/&gt;`
+
+4. 如果明确输出结果不需要对HTML标签做转义的, 可以在VO类上标注`@UnescapeHtml`注解, 这样, 整个VO在Jackson序列化的时候不会对HTML标签做转义
+
+5. 对应的序列化器是 GlobalHtmlEscapeSerializer
+
+6. 配置类是HttpMessageConverterAutoConfiguration
+
+# 十八 数据库缓存双写一致性支持
+
+1. 在写方法上标记注解@CacheEvict来清除缓存, 清除缓存发生在执行数据库写操作之前和写完之后1秒再清除一次, 通过CopilotCacheAspect实现
+

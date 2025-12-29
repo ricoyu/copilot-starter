@@ -4,6 +4,7 @@ import com.awesomecopilot.boot.web.autoconfig.CopilotMvcProperties.CORS;
 import com.awesomecopilot.boot.web.filter.ApiSignFilter;
 import com.awesomecopilot.boot.web.filter.TenantIdFilter;
 import com.awesomecopilot.boot.web.filter.TomcatThreadPoolStatisticFilter;
+import com.awesomecopilot.boot.web.filter.XssFilter;
 import com.awesomecopilot.boot.web.intercepter.IdempotentIntercepter;
 import com.awesomecopilot.web.advice.GlobalBindingAdvice;
 import com.awesomecopilot.web.advice.RestExceptionAdvice;
@@ -31,21 +32,16 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.format.FormatterRegistry;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.reactive.CorsWebFilter;
-import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CharacterEncodingFilter;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.util.pattern.PathPatternParser;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication.Type.REACTIVE;
 import static org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication.Type.SERVLET;
 
 /**
@@ -139,6 +135,18 @@ public class CopilotMvcConfiguration implements WebMvcConfigurer {
 	public FilterRegistrationBean requestRepeatedReadFilter() {
 		FilterRegistrationBean registrationBean = new FilterRegistrationBean();
 		registrationBean.setFilter(new HttpServletRequestRepeatedReadFilter());
+		return registrationBean;
+	}
+
+	/**
+	 * 这个Filter仅会在输入阶段对一些危险的HTML标签做替换, 而不是对所有HTML标签做转义, 这样后端拿到的数据不会是不可读的转义后的字符串
+	 * @return
+	 */
+	@Bean
+	@ConditionalOnProperty(prefix = "copilot.filter", value = "xss-enabled", havingValue = "true", matchIfMissing = false)
+	public FilterRegistrationBean xssFilter() {
+		FilterRegistrationBean registrationBean = new FilterRegistrationBean();
+		registrationBean.setFilter(new XssFilter());
 		return registrationBean;
 	}
 

@@ -17,6 +17,7 @@ import java.lang.annotation.Target;
  *     <li/>休眠1秒再删是因为先删除了缓存, 然后写数据库, 有可能事务还没提交, 又有新的查询进来, 就会读到数据库的老数据, 然后更新到缓存, 导致缓存的数据也是老数据
  *     <li/>这么做, 可以将1秒内所造成的缓存脏数据再次删除
  * </ul>
+ * 如果缓存删除失败, 不会往上抛异常, 避免缓存删除失败导致业务主流程失败
  * <p/>
  * Copyright: Copyright (c) 2025-12-13 16:07
  * <p/>
@@ -31,7 +32,7 @@ import java.lang.annotation.Target;
 public @interface CacheEvict {
 
 	/**
-	 * 要清除的缓存key, 如果有多个key要删除, 逗号隔开
+	 * 要清除的缓存key
 	 */
-	String keys();
+	String[] keys();
 }

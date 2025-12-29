@@ -17,7 +17,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import static com.awesomecopilot.common.lang.utils.DateUtils.format;
-import static com.awesomecopilot.common.lang.utils.StringUtils.split;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
@@ -54,11 +53,10 @@ public class CopilotCacheAspect {
 	public void before(JoinPoint joinPoint) throws Throwable {
 		//根据joinPoint获取CacheEvict注解
 		CacheEvict cacheEvict = getCacheEvictAnnotation(joinPoint);
-		String keys = cacheEvict.keys();
+		String[] keys = cacheEvict.keys();
 		String time = format(new Date());
-		String[] arr = split(keys, ",");
-		for (int i = 0; i < arr.length; i++) {
-			String key = arr[i];
+		for (int i = 0; i < keys.length; i++) {
+			String key = keys[i];
 			log.info("{} 第一次删除缓存: {}", time, key);
 			try {
 				JedisUtils.del(key);
@@ -75,10 +73,9 @@ public class CopilotCacheAspect {
 		CacheEvict cacheEvict = getCacheEvictAnnotation(joinPoint);
 		scheduler.schedule(() -> {
 			String time = format(new Date());
-			String keys = cacheEvict.keys();
-			String[] arr = split(keys, ",");
-			for (int i = 0; i < arr.length; i++) {
-				String key = arr[i];
+			String[] keys = cacheEvict.keys();
+			for (int i = 0; i < keys.length; i++) {
+				String key = keys[i];
 				log.info("{} 延迟1秒再删一遍缓存: {}", time, key);
 				try {
 					JedisUtils.del(key);

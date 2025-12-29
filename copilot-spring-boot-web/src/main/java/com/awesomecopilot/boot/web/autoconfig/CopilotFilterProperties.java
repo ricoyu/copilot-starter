@@ -23,6 +23,11 @@ public class CopilotFilterProperties {
 	 */
 	private boolean repeatedRead = false;
 
+	/**
+	 * 注册XssFilter, 启动XSS攻击和SQL注入攻击防护
+	 */
+	private boolean xssEnabled = false;
+
 	private Tenant tenant;
 
 	/**
@@ -52,6 +57,14 @@ public class CopilotFilterProperties {
 
 	public void setPoolStatistic(boolean poolStatistic) {
 		this.poolStatistic = poolStatistic;
+	}
+
+	public boolean isXssEnabled() {
+		return xssEnabled;
+	}
+
+	public void setXssEnabled(boolean xssEnabled) {
+		this.xssEnabled = xssEnabled;
 	}
 
 	public static class Tenant {
