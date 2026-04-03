@@ -32,7 +32,7 @@ public class TomcatThreadPoolStatisticFilter extends OncePerRequestFilter {
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 		String requestPath = ServletUtils.requestPath(request);
 		if (!ServletUtils.pathMatch(requestPath, pathPrefix)) {
-			//filterChain.doFilter(request, response);
+			filterChain.doFilter(request, response);
 			return;
 		}
 

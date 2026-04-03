@@ -32,6 +32,7 @@ public class CopilotFilterProperties {
 
 	/**
 	 * 是否注册TomcatThreadPoolStatisticFilter, 以开启Tomcat线程池统计功能
+	 * 开启后访问地址 /tomcat/threadpool
 	 */
 	private boolean poolStatistic;
 

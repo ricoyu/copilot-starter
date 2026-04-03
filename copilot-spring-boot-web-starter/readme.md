@@ -541,15 +541,55 @@ copilot.mvc.cors.enabled: false  #默认为false
 
 2. 开启配置后会注册一个XssFilter对输入参数值进行危险HTML标签的替换, 比如script标签, 但是不会对普通HTML标签做转义, 比如前端提交<a href=xxx/>, 后端拿到的还是原样的<a href=xxx/>
 
-3. 输出的时候对HTML标签做转义, 比如输出JSON数据包含<a href=xxx/>会被转义成 `&lt;a href=xxx/&gt;`
+3. 后端读取url参数或者是RequestBody的时候, 内容都会被处理, 去掉<script>标签等等, 但是不会对html坐标做转义, 功能实现是通过XssHttpServletRequestWrapper
 
-4. 如果明确输出结果不需要对HTML标签做转义的, 可以在VO类上标注`@UnescapeHtml`注解, 这样, 整个VO在Jackson序列化的时候不会对HTML标签做转义
+4. 输出的时候对HTML标签做转义, 比如输出JSON数据包含<a href=xxx/>会被转义成 `&lt;a href=xxx/&gt;`
 
-5. 对应的序列化器是 GlobalHtmlEscapeSerializer
+5. 如果明确输出结果不需要对HTML标签做转义的, 可以在VO类上标注`@UnescapeHtml`注解, 这样, 整个VO在Jackson序列化的时候不会对HTML标签做转义
 
-6. 配置类是HttpMessageConverterAutoConfiguration
+6. 对应的序列化器是 GlobalHtmlEscapeSerializer, 需要转义的话, 序列化的时候先调用StringUtils.escapeHtml4(value)进行转义
+
+7. 配置类是HttpMessageConverterAutoConfiguration
 
 # 十八 数据库缓存双写一致性支持
 
 1. 在写方法上标记注解@CacheEvict来清除缓存, 清除缓存发生在执行数据库写操作之前和写完之后1秒再清除一次, 通过CopilotCacheAspect实现
+
+2. 使用示例, 支持SpringEL表达式
+
+   ```java
+   @DeleteMapping("/catelog/{relationId}")
+   // 使用{relationId}作为EL表达式占位符
+   @CacheEvict(keys = "category_brands_#{relationId}")
+   public Result delete(@PathVariable Long relationId) {
+       boolean deleted = categoryBrandService.delete(relationId);
+       return Results.success().data(deleted).build();
+   }
+   ```
+
+3. 如果Controller方法参数是一个DTO
+
+   ```java
+   @DeleteMapping("/catelog/dto")
+   // 关键点：EL表达式写 categoryDTO.relationId（DTO参数名.属性名）
+   @CacheEvict(keys = "category_brands_{categoryDTO.relationId}")
+   public Result deleteByDto(@RequestBody CategoryDTO categoryDTO) {
+       boolean deleted = categoryBrandService.delete(categoryDTO.getRelationId());
+       return Results.success().data(deleted).build();
+   }
+   ```
+
+4. 混合类型参数
+
+   ```java
+   @PostMapping("/catelog/save")
+   @Operation(description = "关联分类和品牌关系")
+   @CacheEvict(keys = {"category_brands_#{brandId}"}) #取的是Long brandId
+   public Result save(@RequestParam(required = false) Long brandId, @RequestBody PmsCategoryBrandRelationDTO pmsCategoryBrandRelationDTO) {
+     categoryBrandService.save(pmsCategoryBrandRelationDTO);
+     return Results.success().build();
+   }
+   ```
+
+   
 

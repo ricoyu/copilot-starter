@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static com.awesomecopilot.security6.constants.ThreadLocalSecurityConstants.LOGIN_INFO;
@@ -44,7 +44,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 
 	private static final Logger log = getLogger(LoginSuccessHandler.class);
-	private static final ThreadPoolExecutor POOL = CopilotExecutors.of("copilot-login-pool").build();
+	private static final ExecutorService POOL = CopilotExecutors.of("copilot-login-pool").build();
 	
 	@SuppressWarnings({"unchecked"})
 	@Override

@@ -32,11 +32,10 @@
         <module>copilot-spring-boot-es-starter</module>
         <module>copilot-spring-cloud</module>
         <module>copilot-spring-cloud-starter</module>
-        <!--<module>copilot-spring-boot-oauth2</module>
-        <module>copilot-spring-boot-oauth2-starter</module>-->
         <module>copilot-spring-boot-webflux</module>
         <module>copilot-spring-security6</module>
         <module>copilot-spring-security6-starter</module>
+        <module>copilot-spring-boot-rocketmq5x-starter</module>
     </modules>
 
     <dependencyManagement>

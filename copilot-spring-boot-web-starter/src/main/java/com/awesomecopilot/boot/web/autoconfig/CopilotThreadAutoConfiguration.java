@@ -2,12 +2,13 @@ package com.awesomecopilot.boot.web.autoconfig;
 
 import com.awesomecopilot.web.listener.ThreadLocalCleanupListener;
 import jakarta.servlet.ServletRequestListener;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.web.servlet.ServletListenerRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+
+import java.util.logging.Logger;
 
 
 /**
@@ -22,8 +23,9 @@ import org.springframework.context.annotation.Primary;
  * @version 1.0
  */
 @Configuration
-@Slf4j
 public class CopilotThreadAutoConfiguration {
+	
+	private static final Logger log = Logger.getLogger(CopilotThreadAutoConfiguration.class.getName());
 	
 	/**
 	 * 在Http请求进来和结束时清理ThreadLocal

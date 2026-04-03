@@ -142,8 +142,13 @@ SQLOperations 和 CriteriaOperations两个接口都支持
    copilot:
      orm:
        logicalDelete:
-         enabled: false
+         enabled: true #默认false
+         field: deleted
    ```
+   
+   这个配置项会注入到JpaDao的logicalDeleteEnabled属性里面, 不是在starter里面使用的
+   
+   配置了逻辑删除后, 删除entity的时候也是将逻辑删除字段设为true而不是真正删除那条数据
 
 
 

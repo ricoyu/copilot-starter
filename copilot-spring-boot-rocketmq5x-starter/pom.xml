@@ -7,15 +7,20 @@
         <artifactId>copilot-starter</artifactId>
         <version>17.0.0</version>
     </parent>
-    <artifactId>copilot-spring-boot-starter</artifactId>
+    <artifactId>copilot-spring-boot-rocketmq5x-starter</artifactId>
     <version>${project.parent.version}</version>
-    <name>copilot SpringBoot Starter</name>
+    <name>copilot SpringBoot RocketMQ Starter</name>
 
     <properties>
         <java.version>17</java.version>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-spring-boot-starter</artifactId>
+            <version>2.3.0</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
@@ -27,8 +32,11 @@
         </dependency>
         <dependency>
             <groupId>com.awesomecopilot</groupId>
-            <artifactId>copilot-spring-boot</artifactId>
-            <version>${project.parent.version}</version>
+            <artifactId>copilot-json</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.awesomecopilot</groupId>
+            <artifactId>copilot-cache</artifactId>
         </dependency>
         <dependency>
             <groupId>org.aspectj</groupId>
@@ -40,6 +48,16 @@
             <artifactId>aspectjrt</artifactId>
             <version>1.8.7</version>
         </dependency>
+
+        <!--<dependency>
+            <groupId>com.awesomecopilot</groupId>
+            <artifactId>copilot-web</artifactId>
+        </dependency>-->
+
+        <!--<dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>-->
     </dependencies>
 
 </project>
