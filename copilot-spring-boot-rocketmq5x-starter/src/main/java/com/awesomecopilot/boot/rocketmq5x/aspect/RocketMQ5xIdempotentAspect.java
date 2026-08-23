@@ -63,9 +63,9 @@ public class RocketMQ5xIdempotentAspect {
 			}
 		}
 		
-		MessageExt msg = (MessageExt)arg;
+		MessageExt msgExt = (MessageExt)arg;
 		String key = idempotent.key();
-		String uniqueValue = getDefaultDedupKey(key, msg);
+		String uniqueValue = getDefaultDedupKey(key, msgExt);
 		//唯一标识为空则不做幂等性处理了
 		if (isBlank(uniqueValue)) {
 			try {
@@ -76,7 +76,7 @@ public class RocketMQ5xIdempotentAspect {
 		}
 		
 		long addCount = SET.sadd(KEY, uniqueValue);
-		String content = new String(msg.getBody(), UTF_8);
+		String content = new String(msgExt.getBody(), UTF_8);
 		//添加成功了就表示这条消息还没有消费过
 		if (addCount == 1) {
 			try {

@@ -3,4 +3,5 @@ com.awesomecopilot.boot.web.autoconfig.CopilotThreadAutoConfiguration
 com.awesomecopilot.boot.web.autoconfig.CopilotLocaleConfiguration
 com.awesomecopilot.boot.web.autoconfig.CopilotWebsocketAutoConfiguration
 com.awesomecopilot.boot.web.autoconfig.HttpMessageConverterAutoConfiguration
+com.awesomecopilot.boot.web.autoconfig.CopilotSwaggerResourceAutoConfiguration
 com.awesomecopilot.boot.web.autoconfig.CopilotWebAutoConfig

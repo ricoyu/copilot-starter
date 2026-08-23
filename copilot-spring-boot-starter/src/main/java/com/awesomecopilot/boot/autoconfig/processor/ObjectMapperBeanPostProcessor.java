@@ -49,8 +49,10 @@ public class ObjectMapperBeanPostProcessor implements SmartInitializingSingleton
 		Class<JacksonUtils> jacksonUtilsClass = JacksonUtils.class;
 		if (JacksonUtils.objectMapper() != objectMapper) {
 			log.info(">>>>>>JacksonUtils already initialized? then do it again<<<<<<");
-			ObjectMapperDecorator decorator = new ObjectMapperDecorator();
-			decorator.decorate(objectMapper);
+			if (ObjectMapperDecorationTracker.markDecorated(objectMapper)) {
+				ObjectMapperDecorator decorator = new ObjectMapperDecorator();
+				decorator.decorate(objectMapper);
+			}
 			ReflectionUtils.setField("objectMapper", jacksonUtilsClass, objectMapper);
 		}
 		
