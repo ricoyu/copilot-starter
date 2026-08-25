@@ -1,595 +1,307 @@
-# 一 日期类型绑定支持
+# Copilot Spring Boot Web Starter
 
-## 1.1 URL请求参数日期类型绑定
+Spring Boot Web 应用 Starter，提供 Web 开发常用功能自动配置。
 
-Controller
+## 功能特性
+
+- ✅ 日期类型绑定支持（Date、LocalDate、LocalDateTime、LocalTime）
+- ✅ Enum 类型参数绑定（大小写不敏感）
+- ✅ WebSocket 分布式推送支持
+- ✅ 国际化支持（i18n）
+- ✅ Jackson 定制增强
+- ✅ UTF-8 编码自动配置
+- ✅ ThreadLocal 自动清理
+- ✅ 接口限流（@RateLimit）
+- ✅ 接口幂等性（@Idempotent）
+- ✅ 全局异常处理
+- ✅ RequestBody 可重复读取
+- ✅ 多租户支持
+- ✅ 接口签名验证
+- ✅ 分页查询支持
+- ✅ Tomcat 线程池监控
+- ✅ CORS 跨域配置
+- ✅ XSS 防护
+- ✅ Redis 缓存双写一致性（@CacheEvict）
+
+## 快速开始
+
+### 1. 引入 Maven 依赖
+
+```xml
+<dependency>
+    <groupId>com.awesomecopilot</groupId>
+    <artifactId>copilot-spring-boot-web-starter</artifactId>
+    <version>${copilot.version}</version>
+</dependency>
+```
+
+### 2. 基础配置
+
+```yaml
+copilot:
+  # MVC 配置
+  mvc:
+    cors-enabled: false                    # CORS 跨域，默认 false
+    rest-exception-advice-enabled: true    # 全局异常处理，默认 true
+    api-sign:
+      enabled: false                       # 接口签名，默认 false
+  
+  # Filter 配置
+  filter:
+    repeated-read: false                   # RequestBody 可重复读取，默认 false
+    pool-statistic: false                  # Tomcat 线程池监控，默认 false
+    xss-enabled: false                     # XSS 防护，默认 false
+    tenant:
+      mandatory: false                     # 是否强制要求 Tenant-Id 请求头，默认 false
+  
+  # WebSocket 配置
+  websocket:
+    enabled: false                         # 是否启用 WebSocket，默认 false
+    path-prefix: /ws/push/**               # WebSocket 路径前缀
+  
+  # 国际化配置
+  locale:
+    enabled: false                         # 是否启用国际化，默认 false
+  
+  # 幂等性配置
+  idempotent:
+    enabled: true                          # 是否启用幂等性，默认 true
+  
+  # 缓存配置
+  cache:
+    enabled: false                         # 是否启用缓存，默认 false
+```
+
+## 功能详解
+
+### 1. 日期类型绑定
+
+自动支持以下日期类型的 URL 参数绑定：
+- `java.util.Date`
+- `java.time.LocalDate`
+- `java.time.LocalDateTime`
+- `java.time.LocalTime`
 
 ```java
 @GetMapping("/birthday")
 public Date dateBind(Date birthday) {
-  return birthday;
+    return birthday;
 }
+// 请求: http://localhost:8080/birthday?birthday=2982-11-09
 ```
 
-http://localhost:8080/order/birthday?birthday=2982-11-09
+### 2. Enum 类型参数绑定
 
-直接传日期参数SpringBoot默认是无法绑定的
-
-```
-2023-02-27 16:56:01.025  WARN 10428 --- [nio-8080-exec-1] .w.s.m.s.DefaultHandlerExceptionResolver L199  : Resolved [org.springframework.web.method.annotation.MethodArgumentTypeMismatchException: Failed to convert value of type 'java.lang.String' to required type 'java.util.Date'; nested exception is org.springframework.core.convert.ConversionFailedException: Failed to convert from type [java.lang.String] to type [java.util.Date] for value '2982-11-09'; nested exception is java.lang.IllegalArgumentException]
-```
-
-loser-spring-boot-web-starter#GlobalBindingAdvice里面通过配置相应的PropertyEditorSupport, 以达到对:
-
-1. java.util.Date
-2. java.time.LocalDate
-3. java.time.LocalDateTime
-4. java.time.LocalTime
-
-这几种日期对象绑定的支持
-
-
-
-## 1.2 输出结果日期类型格式化
-
-如果Controller返回的是一个Date对象, 默认输出格式是UTC日期格式: "2982-11-08T16:00:00.000+00:00"
-
-HttpMessageConverterAutoConfiguration#mappingJackson2HttpMessageConverter方法里面对Spring内置的ObjectMapper增强之后就能输出符合我们习惯的日期格式了
-
-
-
-## 1.3 URL enum类型参数绑定
-
-Controller方法参数是enum类型的话, 传的字符串参数要大写, 与enum完全匹配才行, 否则报:
-
-```
-.w.s.m.s.DefaultHandlerExceptionResolver L199  : Resolved [org.springframework.web.method.annotation.MethodArgumentTypeMismatchException: Failed to convert value of type 'java.lang.String' to required type 'com.loserico.cloud.enums.OrderType'; nested exception is org.springframework.core.convert.ConversionFailedException: Failed to convert from type [java.lang.String] to type [com.loserico.cloud.enums.OrderType] for value 'sec_kill'; nested exception is java.lang.IllegalArgumentException: No enum constant com.loserico.cloud.enums.OrderType.sec_kill]
-```
-
-LoserMvcConfiguration实现了WebMvcConfigurer接口, 通过override #addFormatters 方法向Spring MVC 注入一个自定义的GenericEnumConverter以支持Controller方法Enum类型大小写不敏感的绑定, 并且默认配置了可以按Enum对象的自定义属性code或者desc来绑定, 配置如下:
-
-```java
-@Override
-public void addFormatters(FormatterRegistry registry) {
-  Set<String> properties = new HashSet<>();
-  properties.add("code");
-  properties.add("desc");
-  registry.addConverter(new GenericEnumConverter(properties));
-  WebMvcConfigurer.super.addFormatters(registry);
-}
-```
-
-Controller方法如下:
-
-```java
-@GetMapping("/type")
-public OrderType dateBind(OrderType orderType) {
-  return orderType;
-}
-```
+支持按 enum 的 `code` 或 `desc` 属性绑定，大小写不敏感：
 
 ```java
 public enum OrderType {
-	SEC_KILL(100, "秒杀"),
-	PROMOTION(99, "促销");
-	private int code;
-	private String desc;
-	
-	private OrderType(int code, String desc) {
-		this.code = code;
-		this.desc = desc;
-	}
+    SEC_KILL(100, "秒杀"),
+    PROMOTION(99, "促销");
+    
+    private int code;
+    private String desc;
+}
+
+@GetMapping("/type")
+public OrderType getType(OrderType orderType) {
+    return orderType;
 }
 ```
 
-支持的请求示例:
+支持的请求：
+- `http://localhost:8080/type?orderType=促销`
+- `http://localhost:8080/type?orderType=99`
+- `http://localhost:8080/type?orderType=sec_kill`
 
-1. http://localhost:8080/order/type?orderType=促销
-2. http://localhost:8080/order/type?orderType=99
-
-
-
-## 1.4 RequestBody绑定到Bean中num类型属性
-
-是通过在HttpMessageConverterAutoConfiguration#mappingJackson2HttpMessageConverter方法中
-
-```java
-ObjectMapperDecorator decorator = new ObjectMapperDecorator();
-decorator.decorate(objectMapper);
-```
-
-对Spring容器中的objectMapper做了装饰增强后的效果
-
-## 1.5 Requestbody绑定到Bean的日期类型属性
-
-也是是通过在HttpMessageConverterAutoConfiguration#mappingJackson2HttpMessageConverter方法中
-
-```java
-@Bean
-public MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter() {
-  MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter = new MappingJackson2HttpMessageConverter();
-  ObjectMapperDecorator decorator = new ObjectMapperDecorator();
-  /*
-   * Controller通过一个Bean接收json数据, 对bean中的enum类型属性等的增强, 默认不支持这些类型的绑定
-   */
-  decorator.decorate(objectMapper); //objectMapper是@Autowired进来的
-  mappingJackson2HttpMessageConverter.setObjectMapper(objectMapper);
-  return mappingJackson2HttpMessageConverter;
-}
-```
-
-对Spring容器中的objectMapper做了装饰增强后的效果
-
-
-
-# 二 WebSocket支持
+### 3. WebSocket 分布式推送
 
 ```yaml
-loser:
+copilot:
   websocket:
     enabled: true
-    pathPrefix: /ws/push/**
+    path-prefix: /ws/push/**
   cache:
     enabled: true
 ```
 
-客户端要求后端Websocket服务器推送消息时, 如果是分布式部署的, 那么有可能值推送连接到某一台服务器上的websocket客户端
- * 所以需要额外处理, 使得所有websocket服务器上连接的客户端都被通知到
-
-通过自动添加WebSocketFilter来拦截特定的请求, 这个filter拦截特定的URI, 然后通过Redis发布一条消息, 消息的channel是uri的后半部分, 消息内容是request body部分
-
-**意思就是:**
-
-> 调用HTTP接口, 路径匹配http://localhost:8080/ws/push/weekend就会被这个filter拦截, 然后这个filter读取消息体, 以/ws/push/后面的路径(weekend)为channel发送Redis PUB/SUB, 分布式websocket服务端监听Redis消息, 然后把它存储的websocket session拿出来, 挨个推送一下消息
-
-
-
-# 三 国际化支持
-
-1. application.yml配置
-
-   ```yaml
-   loser:
-     locale:
-       enabled: true
-   ```
-
-2. src\main\resources下创建i18m目录
-
-   **重要:** 必须要一个messages.properties, 否则MessageSource是一个空的MessageSource对象, 里面实际没有加载国际化资源文件
-
-   **第二个重要:**
-
-   * messages.properties        放中文
-   * messages_en_US.properties  放英文
-
-   如果只有这两个文件, 在Windows系统里面切换都OK的, 但是到了Linux系统, 中文始终出不来, 经测试, 必须加另外一个
-
-   * messages_zh_CN.properties  放中文
-
-
-
-## 3.1 编码方式获取国际化消息
-
-```java
-I18N.i18nMessage("account.retry.locked", 3, 1000)
+通过 HTTP 接口触发推送：
+```
+POST http://localhost:8080/ws/push/weekend
+Body: {"message": "周末愉快"}
 ```
 
-这个template在message.properties中
+系统会自动通过 Redis PUB/SUB 通知所有分布式节点推送消息。
 
-```properties
-account.retry.locked=密码错误次数已达到{0}次，账户锁定{1}分钟
-```
-
-
-
-# 四 Jackson定制
-
-出现过这样一个问题: 自定义了ObjectMapper, 为其添加了自定义序列化器, 但是实测Controller输出JSON并没有走这个自定义Serializer
-
-解决:
-
-```java
-@Configuration
-@ConditionalOnWebApplication(type = SERVLET)
-public class HttpMessageConverterAutoConfiguration implements WebMvcConfigurer {
-	
-	@Autowired
-	private ObjectMapper objectMapper;
-	
-	@Bean
-	public MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter() {
-		MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter = new MappingJackson2HttpMessageConverter();
-		ObjectMapperDecorator decorator = new ObjectMapperDecorator();
-		decorator.decorate(objectMapper);
-		mappingJackson2HttpMessageConverter.setObjectMapper(objectMapper);
-		return mappingJackson2HttpMessageConverter;
-	}
-	
-	@Override
-	public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
-		converters.add(0, mappingJackson2HttpMessageConverter());
-	}
-}
-```
-
-# 五 自动配置Encoding
-
-1. LoserMvcConfiguration会自动配置CharacterEncodingFilter, 字符编码设为UTF-8, 但是请注意, 这个CharacterEncodingFilter对下面这种Controller是无效的, 返回的还是乱码
-
-   ```java
-   @CrossOrigin()
-   @GetMapping(value = "/hello")
-   public String hello() throws InterruptedException {
-     return "hi 三少爷";
-   }
-   ```
-
-2. 其实这种方式返回的数据是由HttpMessageConverter负责输出的, 所以要配置HttpMessageConverter的编码格式吗,这个在com.loserico.boot.web.autoconfig.HttpMessageConverterAutoConfiguration做了配置
-
-   ```java
-   /*
-    * 添加这个是处理在返回String类型的结果时, 多了一个双引号问题
-    */
-   List<MediaType> mediaTypes = new ArrayList<MediaType>();
-   mediaTypes.add(MediaType.TEXT_PLAIN);
-   mediaTypes.add(MediaType.APPLICATION_JSON_UTF8);
-   mediaTypes.add(MediaType.APPLICATION_JSON);
-   //构造函数必须传默认编码, 不然返回字符串带中文的会乱码
-   StringHttpMessageConverter stringHttpMessageConverter = new StringHttpMessageConverter(UTF_8);
-   stringHttpMessageConverter.setSupportedMediaTypes(mediaTypes);
-   converters.add(0, stringHttpMessageConverter);
-   ```
-
-   
-
-
-# 六 清理ThreadLocal
-
-在请求进来前已经处理完毕后清理ThreadLocal, 避免内存泄漏
-
-在CopilotThreadAutoConfiguration里面注册了ThreadLocalCleanupListener, 默认就注册了
-
-
-
-# 七 应用限流
-
-CopilotWebAutoConfig中添加了RateLimitIntercepter实现应用限流
-
-
-
-# 八 RequestBody JSON数据增强
-
-* Controller通过一个Bean接收json数据, 对bean中的enum类型属性等的增强, 默认不支持这些类型的绑定
-* 在返回String类型的结果时, 多了一个双引号问题解决
-
-
-
-# 九 接口幂等性
-
-开关, 默认就开启
-
-```properties
-copilot.idemtotent.enabled=true
-```
-
-请求 /idempotent-token  拿到幂等性token, 塞到Idempotent-Token这个Header中
-
-IdempotentIntercepter会对加了@Idempotent注解的接口进行幂等性检查
-
-
-
-# 十 全局异常处理
+### 4. 国际化支持
 
 ```yaml
 copilot:
-  mvc:
-    rest-exception-advice-enabled: true
+  locale:
+    enabled: true
 ```
 
-这个默认就是true, 所以默认不需要配置, 想要关闭的时候配置为false
+在 `src/main/resources/i18n/` 下创建：
+- `messages.properties` - 中文
+- `messages_en_US.properties` - 英文
+- `messages_zh_CN.properties` - 中文（Linux 必需）
 
-# 十一 可重复读取RequestBody
-
-配置
-
-```yaml
-copilot.filter.repeated-read: true
+编程方式获取：
+```java
+String message = I18N.i18nMessage("account.retry.locked", 3, 1000);
 ```
 
-开启在同一个Controller方法多次读取RequestBody, 即可以用多个@RequestBody将RequestBody中的数据绑定到bean中
+### 5. 接口幂等性
 
+```java
+@Idempotent
+@PostMapping("/submit")
+public Result submit() {
+    // 业务逻辑
+}
+```
 
+客户端先请求 `/idempotent-token` 获取 token，然后设置请求头：
+```
+Idempotent-Token: <token>
+```
 
-# 十二 多租户支持
+### 6. 多租户支持
 
 ```yaml
 copilot:
   filter:
     tenant:
-      mandatory: false
+      mandatory: true  # 强制要求 Tenant-Id 请求头
 ```
 
-是否要求必须携带Tenant-Id请求头, 默认false, 如果是true, 不包含Tenant-Id请求头会报错
+客户端请求需携带 `Tenant-Id` 请求头。
 
-```json
-{
-    "code": "4006",
-    "status": "fail",
-    "message": "请提供租户ID"
+### 7. 接口签名验证
+
+```yaml
+copilot:
+  mvc:
+    api-sign:
+      enabled: true
+```
+
+客户端签名流程：
+1. 获取时间戳 `timestamp`
+2. 生成随机串 `nonce`
+3. 拼接 `message = uri=${uri}&timestamp=${timestamp}&nonce=${nonce}`
+4. SHA256 哈希生成签名
+5. 设置请求头：`Timestamp`、`Nonce`、`Signature`
+
+### 8. 分页查询
+
+**方式1：DTO 继承 PageDTO**
+
+```java
+@Data
+public class UserQueryDTO extends PageDTO {
+    private String name;
+    private Integer status;
+}
+
+@PostMapping("/list")
+public Result<List<User>> list(@RequestBody UserQueryDTO dto) {
+    List<User> users = userService.queryPage(dto);
+    return Results.<List<User>>success().data(users).build();
 }
 ```
 
+**方式2：DTO 包含 Page 属性**
 
-
-# 十三 接口签名
-
-提供校验接口签名功能, 防止接口及Token泄漏后被黑客随意调用
-
-开启接口验签配置项:
-
-```properties
-copilot.mvc.api-sign.enabled=true
+```java
+@Data
+public class UserQueryDTO {
+    private String name;
+    private Page page;
+}
 ```
 
-客户端需要做的:
+返回结果自动包含分页信息：
+```json
+{
+    "code": "0",
+    "status": "success",
+    "page": {
+        "pageNum": 1,
+        "pageSize": 5,
+        "total": 100,
+        "totalPages": 20
+    },
+    "data": [...]
+}
+```
 
-* 拿到当前时间戳放到变量timestamp, 如果考虑客户端与服务端时钟不同步, 可以请求服务端/timestamp获取服务端当前时间戳
-* 生成一个随机串放到变量nonce
-* 拿到当前请求接口的uri
-* 按照格式: message = `uri=${uri}&timestamp=${timestamp}&nonce=${nonce}`;
-* 然后用sha256哈希对其生成摘要, 设置到Signature请求头
-* 设置请求头Timestamp
-* 设置请求头Nonce
-* 设置请求头Signature
-
-服务端处理:
-
-* 拿到当前请求的uri部分
-* 拿到Timestamp请求头值
-* 拿到Nonce请求头值
-* 拿到Signature请求头值
-* 按照顺序拼装字符串message = `uri=${uri}&timestamp=${timestamp}&nonce=${nonce}`;
-* 对message用sha256生成摘要
-* 比如生成的摘要与Signature请求头值是否匹配
-
-
-
-# 十四 分页支持
-
-1. 方式1
-
-   * Controller方法参数DTO继承 com.awesomecopilot.common.lang.dto.PageDTO
-
-   * 前端传递的分页查询包含pageNum, pageSize两个参数, 比如
-
-     ```json
-     {
-         "name": "22",
-         "status": 1,
-         "pageNum": 2,
-         "pageSize": 5
-     }
-     ```
-
-   * 然后在传递给DAO层进行分页查询的时候通过dto.getPage()获取分页对象传递给DAO层的分页参数
-
-2. 方式2
-
-   * Controller方法参数DTO持有一个Page类型的属性
-
-   * 前端分页查询参数包含一个page对象属性, 比如
-
-     ```json
-     {
-       "name": "22",
-       "status": 1,
-       "page": {
-         "pageNum": 2,
-         "pageSize": 5
-       }
-     }
-     ```
-
-   * 拿到page对象传递给DAO层的分页方法
-
-3. Controller方法正常返回Result对象, result对象是包含一个Page属性的, 程序员自己不需要将page对象回填进最终返回的result对象里面, 为了省力, 框架提供了一个PageResultAspect将page对象回填进result里面
-
-代码示例:
-
-1. DTO
-
-   ```java
-   package com.awesomecopilot.mall.coupon.dto;
-   
-   import com.awesomecopilot.common.lang.dto.PageDTO;
-   import com.awesomecopilot.common.lang.vo.Page;
-   import jakarta.validation.constraints.NotEmpty;
-   import jakarta.validation.constraints.NotNull;
-   import jakarta.validation.constraints.Size;
-   import lombok.Data;
-   
-   import java.time.LocalDateTime;
-   
-   /**
-    * 秒杀活动场次
-    * 对应数据库表：sms_seckill_session
-    * <p/>
-    * Copyright: Copyright (c) 2025-09-12 19:55
-    * <p/>
-    * Company: Sexy Uncle Inc.
-    * <p/>
-   
-    * @author Rico Yu  ricoyu520@gmail.com
-    * @version 1.0
-    */
-   @Data
-   public class SmsSeckillSessionQueryDTO extends PageDTO {
-   
-   
-       /**
-        * 场次名称
-        */
-       private String name;
-   
-       /**
-        * 启用状态
-        */
-   
-       private Boolean status;
-   
-   }
-   ```
-
-   
-
-2. Controller方法
-
-   ```java
-   @PostMapping("/list")
-   public Result<List<SmsSeckillSession>> list(@RequestBody SmsSeckillSessionQueryDTO smsSeckillSessionQueryDTO) {
-     List<SmsSeckillSession> smsSeckillSessions = seckillPromotionService.queryPage(smsSeckillSessionQueryDTO);
-     Result<List<SmsSeckillSession>> result =
-         Results.<List<SmsSeckillSession>>success().data(smsSeckillSessions).build();
-     //在返回前PageResultAspect会将更新了分页结果的page对象set进result
-     return result;
-   }
-   ```
-
-3. Service方法
-
-   ```java
-   public List<SmsSeckillSession> queryPage(SmsSeckillSessionQueryDTO smsSeckillSessionQueryDTO) {
-     CriteriaQueryBuilder queryBuilder = criteriaOperations.query(SmsSeckillSession.class);
-     if (isNotBlank(smsSeckillSessionQueryDTO.getName())) {
-       queryBuilder.like("name", smsSeckillSessionQueryDTO.getName());
-     }
-     if (smsSeckillSessionQueryDTO.getStatus() != null) {
-       queryBuilder.eq("status", smsSeckillSessionQueryDTO.getStatus());
-     }
-     queryBuilder.desc("createTime");
-   
-     return queryBuilder.findPage(smsSeckillSessionQueryDTO.getPage());
-   }
-   ```
-
-4. 返回结果示例
-
-   ```json
-   {
-       "code": "0",
-       "status": "success",
-       "message": null,
-       "page": {
-           "pageNum": 1,
-           "pageSize": 5,
-           "total": 1,
-           "totalPages": 1
-       },
-       "data": [
-           {
-               "createTime": "2025-09-12 21:31:45",
-               "endTime": "2025-09-12 21:30:00",
-               "id": 1,
-               "name": "22点场",
-               "startTime": "2025-09-12 21:00:00",
-               "status": true
-           }
-       ]
-   }
-   ```
-
-# 十五 添加了打印SpringBoot Tomcat线程池的filter
-
-目前只支持 URL 参数、表单form-data/x-www-form-urlencoded格式的参数; request body还不支持
-
-1. 开关
-
-   ```yaml
-   copilot.filter.pool-statistic: true
-   ```
-
-2. 对应注册的filter
-
-   TomcatThreadPoolStatisticFilter
-
-3. 返回线程池统计情况的URL
-
-   http://localhost:8080/tomcat/threadpool
-
-
-
-# 十六 做了CORS跨域配置
-
-如果用了网关, 记得CORS只在网关侧控制, 微服务端要关掉, 配置
+### 9. XSS 防护
 
 ```yaml
-copilot.mvc.cors.enabled: false  #默认为false
+copilot:
+  filter:
+    xss-enabled: true
 ```
 
-否则浏览器会报CORS error
+- 输入时自动过滤 `<script>` 等危险标签
+- 输出时自动转义 HTML 标签
+- VO 类标注 `@UnescapeHtml` 可跳过转义
 
+### 10. Redis 缓存双写一致性
 
+```java
+@DeleteMapping("/{id}")
+@CacheEvict(keys = "user_#{id}")
+public Result delete(@PathVariable Long id) {
+    userService.delete(id);
+    return Results.success().build();
+}
+```
 
-# 十七 防XSS攻击
+支持 Spring EL 表达式，执行前后各删除一次缓存。
 
-1. 配置
+### 11. Tomcat 线程池监控
 
-   ```properties
-   copilot.filter.xss-enabled=true #必须显式配置
-   ```
+```yaml
+copilot:
+  filter:
+    pool-statistic: true
+```
 
-2. 开启配置后会注册一个XssFilter对输入参数值进行危险HTML标签的替换, 比如script标签, 但是不会对普通HTML标签做转义, 比如前端提交<a href=xxx/>, 后端拿到的还是原样的<a href=xxx/>
+访问 `http://localhost:8080/tomcat/threadpool` 查看线程池状态。
 
-3. 后端读取url参数或者是RequestBody的时候, 内容都会被处理, 去掉<script>标签等等, 但是不会对html坐标做转义, 功能实现是通过XssHttpServletRequestWrapper
+### 12. RequestBody 可重复读取
 
-4. 输出的时候对HTML标签做转义, 比如输出JSON数据包含<a href=xxx/>会被转义成 `&lt;a href=xxx/&gt;`
+```yaml
+copilot:
+  filter:
+    repeated-read: true
+```
 
-5. 如果明确输出结果不需要对HTML标签做转义的, 可以在VO类上标注`@UnescapeHtml`注解, 这样, 整个VO在Jackson序列化的时候不会对HTML标签做转义
+允许同一个 Controller 方法使用多个 `@RequestBody` 参数。
 
-6. 对应的序列化器是 GlobalHtmlEscapeSerializer, 需要转义的话, 序列化的时候先调用StringUtils.escapeHtml4(value)进行转义
+## 配置项说明
 
-7. 配置类是HttpMessageConverterAutoConfiguration
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `copilot.mvc.cors-enabled` | boolean | false | 是否启用 CORS |
+| `copilot.mvc.rest-exception-advice-enabled` | boolean | true | 是否启用全局异常处理 |
+| `copilot.mvc.api-sign.enabled` | boolean | false | 是否启用接口签名 |
+| `copilot.filter.repeated-read` | boolean | false | RequestBody 可重复读取 |
+| `copilot.filter.pool-statistic` | boolean | false | Tomcat 线程池监控 |
+| `copilot.filter.xss-enabled` | boolean | false | XSS 防护 |
+| `copilot.filter.tenant.mandatory` | boolean | false | 是否强制要求租户ID |
+| `copilot.websocket.enabled` | boolean | false | WebSocket 支持 |
+| `copilot.websocket.path-prefix` | String | /ws/push/** | WebSocket 路径前缀 |
+| `copilot.locale.enabled` | boolean | false | 国际化支持 |
+| `copilot.idempotent.enabled` | boolean | true | 接口幂等性 |
+| `copilot.cache.enabled` | boolean | false | 缓存功能 |
 
-# 十八 数据库缓存双写一致性支持
+## 依赖说明
 
-1. 在写方法上标记注解@CacheEvict来清除缓存, 清除缓存发生在执行数据库写操作之前和写完之后1秒再清除一次, 通过CopilotCacheAspect实现
-
-2. 使用示例, 支持SpringEL表达式
-
-   ```java
-   @DeleteMapping("/catelog/{relationId}")
-   // 使用{relationId}作为EL表达式占位符
-   @CacheEvict(keys = "category_brands_#{relationId}")
-   public Result delete(@PathVariable Long relationId) {
-       boolean deleted = categoryBrandService.delete(relationId);
-       return Results.success().data(deleted).build();
-   }
-   ```
-
-3. 如果Controller方法参数是一个DTO
-
-   ```java
-   @DeleteMapping("/catelog/dto")
-   // 关键点：EL表达式写 categoryDTO.relationId（DTO参数名.属性名）
-   @CacheEvict(keys = "category_brands_{categoryDTO.relationId}")
-   public Result deleteByDto(@RequestBody CategoryDTO categoryDTO) {
-       boolean deleted = categoryBrandService.delete(categoryDTO.getRelationId());
-       return Results.success().data(deleted).build();
-   }
-   ```
-
-4. 混合类型参数
-
-   ```java
-   @PostMapping("/catelog/save")
-   @Operation(description = "关联分类和品牌关系")
-   @CacheEvict(keys = {"category_brands_#{brandId}"}) #取的是Long brandId
-   public Result save(@RequestParam(required = false) Long brandId, @RequestBody PmsCategoryBrandRelationDTO pmsCategoryBrandRelationDTO) {
-     categoryBrandService.save(pmsCategoryBrandRelationDTO);
-     return Results.success().build();
-   }
-   ```
-
-   
-
+本 Starter 依赖以下模块：
+- `copilot-spring-boot-web`：Web 核心组件
+- `copilot-spring-boot-starter`：基础 Starter
+- `copilot-cache`：Redis 缓存支持
+- `copilot-json`：JSON 序列化支持

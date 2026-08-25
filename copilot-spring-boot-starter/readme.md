@@ -1,180 +1,177 @@
-# 一 @RedisListener注解支持
+# Copilot Spring Boot Starter
 
-1. 先要引入starter:
+Spring Boot 基础 Starter，提供常用功能自动配置。
 
-   ```xml
-   <dependency>
-       <groupId>com.loserico</groupId>
-       <artifactId>loser-spring-boot-starter</artifactId>
-       <version>2.6.2</version>
-   </dependency>
-   ```
+## 功能特性
 
-   com.loserico.boot.annotation.processor.RedisListenerProcessor类负责处理@RedisListener注解
+- ✅ @RedisListener 注解支持（Redis 订阅）
+- ✅ @PostInitialize 注解支持（事务就绪后执行）
+- ✅ ApplicationContextHolder（Spring 上下文访问）
+- ✅ LocalTime 自动转换
+- ✅ 循环依赖自动解决
+- ✅ 逻辑删除自动条件
+- ✅ Redis 缓存延迟双删
+- ✅ 时区自动设置
+- ✅ 异步事务支持
 
-2. src/main/resources下放redis.properties, 配置Redis IP和密码
+## 快速开始
 
-   ```properties
-   redis.host=192.168.100.13
-   redis.password=deepdata$
-   ```
-
-3. application.yaml增加配置
-
-   ```yaml
-   copilot.cache.enabled: true
-   ```
-
-即可开启对@RedisListener的支持
-
-# 二 @RedisListener使用示例
-
-## 2.1 Key过期订阅
-
-1. 需要订阅的方法增加注解
-
-   下面这个方法在Redis任何key过期时会收到通知, 收到消息时传入的参数:
-
-   * channel 参数值固定为 `__keyevent@0__:expired`
-   * message 参数值为过期的key, 如k1
-
-   ```java
-   @RedisListener(channelPatterns = "__keyevent@*__:expired")
-   public void listen(String channel, String message) {
-     log.info("{} 频道上收到消息: {}", channel, message);
-   }
-   ```
-
-## 2.2 PUB/SUB订阅
-
-1. 需要订阅的方法增加注解
-
-   ```java
-   @RedisListener(channels = "inbound")
-   public void broadCastMessage(String channel, String message) {
-     System.out.println(channel+": " + message);
-   }
-   ```
-
-2. 在Redis发布一条消息
-
-   ```shell
-   127.0.0.1:6379> publish inbound 三少爷
-   (integer) 1
-   ```
-
-3. 接收参数解释
-
-   * channel 在哪个topic上收到的消息就是哪个topic的名字, 这边是示例中的inbound
-   * message 发布的消息, 这边是示例中的 三少爷
-
-
-
-# 三 @PostInitialize注解支持
-
-Spring官方的@PostConstruct也可以在容器启动后自动执行指定方法, 但此时Spring事务还未准备好, 而@PostInitialize可以在Spring的事务已经完全Ready的情况下自动运行
-
-# 四 日期转换
-
-LoserConverterAutoConfiguration配置了bean: LocalTimeConverter来实现对LocalTime的自动转换
-
-# 五 解决循环依赖
-
-Circular References Prohibited by Default in spring boot version 2.6
-
-所以现在默认不允许有循环依赖了, 所以我在这个starter的classpath下放了一个application.properties文件, 里面配置了
-
-```properties
-spring.main.allow-circular-references=true
-```
-
-使得SpringBoot应用跟以前一样, 默认可以自动解决循环依赖问题
-
-
-
-# 六 ApplicationContextHolder
-
-自动配置了ApplicationContextHolder, 在应用里面要访问Spring的ApplicationContext可以这样:
-
-```java
-(LocaleResolver) ApplicationContextHolder.getBean("localeResolver")
-```
-
-```java
-CopilotFilterProperties properties = (CopilotFilterProperties) ApplicationContextHolder.getBean(CopilotFilterProperties.class);
-```
-
-
-
-# 七 自动添加 逻辑删除 条件
-
-引入Maven依赖后
+### 1. 引入 Maven 依赖
 
 ```xml
 <dependency>
     <groupId>com.awesomecopilot</groupId>
     <artifactId>copilot-spring-boot-starter</artifactId>
+    <version>${copilot.version}</version>
 </dependency>
 ```
 
-默认就支持逻辑删除, 每条SQL后面都会自动加上deleted=0
+### 2. 基础配置
 
-SQLOperations 和 CriteriaOperations两个接口都支持
+```yaml
+copilot:
+  # 设置时区，默认 Asia/Shanghai
+  timezone: Asia/Shanghai
+  
+  # 是否开启异步事务支持，默认 true
+  async-transaction: true
+  
+  # 是否开启 @PostInitialize 注解支持，默认 true
+  enable-post-initialize: true
+```
 
-配置方法:
+## 功能详解
 
-1. 添加拦截器
+### 1. @RedisListener - Redis 订阅
 
-   ```yaml
-   spring:
-     jpa:
-       properties:
-         hibernate:
-           session_factory:
-             statement_inspector: com.awesomecopilot.cloud.product.config.DeletedTenantIdConditionInterceptor
-   ```
+#### Key 过期订阅
 
-2. 显式关闭逻辑删除功能
+```java
+@RedisListener(channelPatterns = "__keyevent@*__:expired")
+public void listen(String channel, String message) {
+    // channel: __keyevent@0__:expired
+    // message: 过期的 key
+    log.info("{} 频道上收到消息: {}", channel, message);
+}
+```
 
-   application.yaml配置
+#### PUB/SUB 订阅
 
-   ```yaml
-   copilot:
-     orm:
-       logicalDelete:
-         enabled: true #默认false
-         field: deleted
-   ```
-   
-   这个配置项会注入到JpaDao的logicalDeleteEnabled属性里面, 不是在starter里面使用的
-   
-   配置了逻辑删除后, 删除entity的时候也是将逻辑删除字段设为true而不是真正删除那条数据
+```java
+@RedisListener(channels = "inbound")
+public void broadCastMessage(String channel, String message) {
+    System.out.println(channel + ": " + message);
+}
+```
 
+**启用配置：**
 
+```yaml
+copilot:
+  cache:
+    enabled: true
+```
 
-# 八 Redis缓存延迟双删支持
+**Redis 配置（src/main/resources/redis.properties）：**
 
-1. application.yaml
+```properties
+redis.host=192.168.100.13
+redis.password=deepdata$
+```
 
-   开关要开启
+### 2. @PostInitialize - 事务就绪后执行
 
-   ```yaml
-   copilot:
-     cache:
-       enabled: true
-   ```
+与 `@PostConstruct` 不同，`@PostInitialize` 在 Spring 事务完全准备好后执行：
 
-2. src/main/resources下放一个redis.properties文件
+```java
+@PostInitialize
+public void init() {
+    // 此时事务已就绪，可以安全执行数据库操作
+    userRepository.save(new User());
+}
+```
 
-   ```properties
-   redis.host=192.168.100.161
-   redis.password=deepdata$
-   ```
+### 3. ApplicationContextHolder - 访问 Spring 上下文
 
-3. 业务方法上标注注解, 要同时删多个key的话用逗号隔开即可
+```java
+// 按名称获取 Bean
+LocaleResolver resolver = (LocaleResolver) ApplicationContextHolder.getBean("localeResolver");
 
-   ```java
-   @CacheEvict(keys = "menu_id_name_map")
-   ```
+// 按类型获取 Bean
+CopilotFilterProperties properties = ApplicationContextHolder.getBean(CopilotFilterProperties.class);
+```
 
-   
+### 4. LocalTime 自动转换
+
+自动配置 `LocalTimeConverter`，支持 LocalTime 类型的自动转换。
+
+### 5. 循环依赖解决
+
+默认允许循环依赖（等同于 Spring Boot 2.6 之前的行为）：
+
+```properties
+spring.main.allow-circular-references=true
+```
+
+### 6. 逻辑删除自动条件
+
+引入依赖后，所有 SQL 自动添加 `deleted=0` 条件。
+
+**配置拦截器：**
+
+```yaml
+spring:
+  jpa:
+    properties:
+      hibernate:
+        session_factory:
+          statement_inspector: com.awesomecopilot.cloud.product.config.DeletedTenantIdConditionInterceptor
+```
+
+**启用逻辑删除：**
+
+```yaml
+copilot:
+  orm:
+    logical-delete:
+      enabled: true  # 默认 false
+      field: deleted
+```
+
+### 7. Redis 缓存延迟双删
+
+使用 `@CacheEvict` 注解实现延迟双删：
+
+```java
+@CacheEvict(keys = "menu_id_name_map")
+public void updateMenu() {
+    // 更新数据库
+    // 自动删除缓存，延迟后再次删除
+}
+```
+
+**启用配置：**
+
+```yaml
+copilot:
+  cache:
+    enabled: true
+```
+
+## 配置项说明
+
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `copilot.timezone` | String | Asia/Shanghai | 应用时区 |
+| `copilot.async-transaction` | boolean | true | 是否开启异步事务支持 |
+| `copilot.enable-post-initialize` | boolean | true | 是否开启 @PostInitialize 支持 |
+| `copilot.cache.enabled` | boolean | false | 是否开启缓存功能 |
+| `copilot.orm.logical-delete.enabled` | boolean | false | 是否开启逻辑删除 |
+| `copilot.orm.logical-delete.field` | String | deleted | 逻辑删除字段名 |
+
+## 依赖说明
+
+本 Starter 依赖以下模块：
+- `copilot-spring-boot`：核心组件
+- `copilot-cache`：Redis 缓存支持
+- `commons-spring`：Spring 工具类

@@ -1,136 +1,152 @@
-# 一 接口幂等性@Idempotent
+# Copilot Spring Cloud Starter
 
-* 在需要做接口幂等性的接口方法上添加@Idempotent注解
-* 调用方的feign要加上这个拦截器 com.awesomecopilot.cloud.feign.interceptor.IdempotentInterceptor 以填充Idempotent请求头到Header中
-* 处理@Idempotent注解的是IdempotentAspect
-* 加了@Idempotent注解的微服务要在application.yaml中配置 copilot.idemtotent.enabled: true, 否则不会生效, 这个配置项的作用是配置bean: IdempotentAspect
+Spring Cloud 微服务 Starter，提供微服务开发常用功能自动配置。
 
-目前基于Redis的Hyperloglog来实现, 开启开关:
+## 功能特性
 
-```properties
-loser.idemtotent.enabled=true
+- ✅ 接口幂等性（@Idempotent）
+- ✅ Sentinel 异常处理
+- ✅ Sentinel 授权规则
+- ✅ 多租户支持（Feign 传递 Tenant-Id）
+- ✅ Feign 拦截器自动配置
+
+## 快速开始
+
+### 1. 引入 Maven 依赖
+
+```xml
+<dependency>
+    <groupId>com.awesomecopilot</groupId>
+    <artifactId>copilot-spring-cloud-starter</artifactId>
+    <version>${copilot.version}</version>
+</dependency>
 ```
 
-在要做幂等性控制的方法上加@Idemtotent 注解, 如果被幂等性控制了, 返回调用成功, 但是返回的数据是null
+### 2. 基础配置
 
-1. 被调用方在resources下要放置redis.properties, 配置JedisUtils连接信息
+```yaml
+copilot:
+  # 幂等性配置
+  idempotent:
+    enabled: true
+  
+  # Sentinel 配置
+  sentinel:
+    rest-exception-enabled: true       # Sentinel 异常处理，默认 true
+    auth-rule:
+      enabled: false                   # 授权规则，默认 false
+      header: Auth-Origin              # 来源请求头
+  
+  # 多租户配置
+  filter:
+    tenant:
+      mandatory: false                 # 是否强制要求 Tenant-Id
+```
 
-   连接单实例Redis配置示例:
+## 功能详解
 
-   ```properties
-   redis.host=localhost
-   redis.port=6379
-   redis.password=123456
-   ```
+### 1. 接口幂等性 @Idempotent
 
-   连接Sentinel配置示例:
+**被调用方配置：**
 
-   ```properties
-   redis.sentinels=192.168.100.101:26379,192.168.100.102:26379,192.168.100.103:26379
-   redis.password=123456
-   ```
+```yaml
+copilot:
+  idempotent:
+    enabled: true
+```
 
-   连接Redis集群配置示例
+在需要幂等性控制的方法上添加注解：
 
-   ```properties
-   redis.clusters=192.168.100.101:6379,192.168.100.101:6380,192.168.2.102:6379,192.168.2.102:6380,192.168.2.103:6379,192.168.2.103:6380
-   redis.password=123456
-   ```
+```java
+@Idempotent
+@PostMapping("/order")
+public Result createOrder(@RequestBody OrderDTO dto) {
+    // 业务逻辑
+}
+```
 
+**调用方配置：**
 
+Feign 客户端添加拦截器：
 
-# 二 Sentinel异常处理
+```java
+@FeignClient(name = "order-service")
+public interface OrderFeignClient {
+    // 自动填充 Idempotent-Token 请求头
+}
+```
 
-开启开关, 这是默认就开启的, 要关闭设为false即可
+**Redis 配置（src/main/resources/redis.properties）：**
+
+```properties
+# 单实例
+redis.host=localhost
+redis.port=6379
+redis.password=123456
+
+# Sentinel 模式
+redis.sentinels=192.168.100.101:26379,192.168.100.102:26379
+redis.password=123456
+
+# 集群模式
+redis.clusters=192.168.100.101:6379,192.168.100.101:6380
+redis.password=123456
+```
+
+### 2. Sentinel 异常处理
 
 ```yaml
 copilot:
   sentinel:
-    rest-exception-enabled: true
+    rest-exception-enabled: true  # 默认 true
 ```
 
-作用: 注册一个Bean RestBlockExceptionHandler, 用来对Sentinel流控, 降级等异常进行处理
-
-**原理解析:**
-
-​	Sentinel注册了一个AbstractSentinelInterceptor, 这是实现了Spring MVC的HandlerInterceptor, 在其preHandle方法里面捕获流控异常, 然后交给DefaultBlockExceptionHandler去处理, 这个类就默认返回字符串 "Blocked by Sentinel (flow limiting)", 我这边提供的RestBlockExceptionHandler返回REST结果, 结果类似这样
+自动注册 `RestBlockExceptionHandler`，返回 REST 格式异常响应：
 
 ```json
 {"code":"42901","desc":"已被流控"}
 ```
 
-配置了RestExceptionAdvice后, RestBlockExceptionHandler处理熔断规则将不生效, 流控还是OK的
-
-所以在RestExceptionAdvice#handleThrowable方法里面特意检查了一下是否存在RestBlockExceptionHandler这个类, 如果存在就直接重新抛出异常
-
-
-
-application.yaml配置项
+### 3. Sentinel 授权规则
 
 ```yaml
-copilot.sentinel.rest-exception-enabled: true
+copilot:
+  sentinel:
+    auth-rule:
+      enabled: true
+      header: Auth-Origin  # 默认值
 ```
 
-控制是否要对流控异常做统一异常处理, 默认true
+自动配置：
+- `CopilotOriginParser` - 解析请求来源
+- `AuthFlowInterceptor` - Feign 调用时传递 Origin 请求头
 
+### 4. 多租户支持
 
+自动配置 `TenantIdInterceptor`，在所有 Feign 调用中传递 `Tenant-Id` 请求头。
 
-# 三 Sentinel授权规则以及根据调用方流控支持
-
-1. application.yaml添加配置
-
-   ```yaml
-   copilot:
-     sentinel:
-       auth-rule:
-         enabled: true
-   ```
-
-2. CopilotSpringCloudAutoConfiguration会自动配置bean: originParser, 默认取 Auth-Origin 这个请求头
-
-   ```java
-   public class CopilotOriginParser implements RequestOriginParser {
-   
-   	private static final Logger log = LoggerFactory.getLogger(CopilotOriginParser.class);
-   
-   	@Autowired
-   	private SentinelProperties sentinelProperties;
-   
-   	@Override
-   	public String parseOrigin(HttpServletRequest request) {
-   		String header = sentinelProperties.getAuthRule().getHeader();
-   		String headerValue = request.getHeader(header);
-   		log.info("请求头 {} 的值为 {}", header, headerValue);
-   		return headerValue;
-   	}
-   }
-   ```
-   
-3. 还会自动配置AuthFlowInterceptor, 用来实现微服务A通过feign调微服务B时候传递Origin请求头
-
-# 四 多租户
-
-CopilotSpringCloudAutoConfiguration里面配置了全局的TenantIdInterceptor, 不需要手工配置, 对所有Feign客户端生效, 从当前请求头中拿Tenant-Id, 如果有的话塞到Feign的请求头中传递下去, 因为这个只是检查一下有没有, 有的话传递下去, 所以不需要开关, 默认开启就是了
-
-```java
-/**
- * 用于在feign调用的时候传递请求头中的租户ID
- * @return
- */
-@Bean
-@ConditionalOnMissingBean(TenantIdInterceptor.class)
-public TenantIdInterceptor tenantIdInterceptor() {
-  return new TenantIdInterceptor();
-}
-```
-
-配合
+配合 Web Starter 的强制校验：
 
 ```yaml
 copilot:
   filter:
     tenant:
-      mandatory: true
+      mandatory: true  # 强制要求携带 Tenant-Id
 ```
 
-达到强制传TenantId的效果
+## 配置项说明
+
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `copilot.idempotent.enabled` | boolean | false | 是否启用幂等性 |
+| `copilot.sentinel.rest-exception-enabled` | boolean | true | Sentinel 异常处理 |
+| `copilot.sentinel.auth-rule.enabled` | boolean | false | 授权规则 |
+| `copilot.sentinel.auth-rule.header` | String | Auth-Origin | 来源请求头名称 |
+| `copilot.filter.tenant.mandatory` | boolean | false | 是否强制要求租户ID |
+
+## 依赖说明
+
+本 Starter 依赖以下模块：
+- `copilot-spring-cloud`：Spring Cloud 核心组件
+- `spring-cloud-starter-openfeign`：OpenFeign
+- `copilot-cache`：Redis 缓存支持

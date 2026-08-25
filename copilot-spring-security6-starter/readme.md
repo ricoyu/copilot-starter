@@ -367,3 +367,333 @@ public PasswordEncoder passwordEncoder() {
 - `copilot-cache`：Redis 缓存支持
 - `copilot-json`：JSON 序列化支持
 - `copilot-web`：Web 工具类
+
+---
+
+## 核心架构（源码级解析）
+
+### 认证全流程（时序）
+
+```
+┌─────────┐     POST /login       ┌──────────────────────────────────────┐
+│  客户端  │ ──────────────────── → │  Spring Security FilterChain         │
+│          │    {username, password} │                                    │
+│          │                        │  ① HttpServletRequestRepeatedReadFilter (Body可重复读)
+│          │                        │  ② SecurityExceptionFilter           (异常兜底)
+│          │                        │  ③ PreAuthenticationFilter           (Token认证)
+│          │                        │     └─ 登录请求时跳过(isLoginRequest)
+│          │                        │  ④ UsernamePasswordAuthenticationFilter (登录处理)
+│          │                        │     ├─ 提取 username/password
+│          │                        │     ├─ DaoAuthenticationProvider.authenticate()
+│          │                        │     │   └─ UserDetailsService.loadUserByUsername()
+│          │                        │     │       └─ 业务实现: 查DB → 加载角色+权限
+│          │                        │     ├─ 认证成功 → LoginSuccessHandler
+│          │                        │     └─ 认证失败 → LoginFailureHandler
+│          │                        │                                    │
+│          │  ← { code:0, data:     │                                    │
+│          │     "66位随机token" }   │                                    │
+└─────────┘                        └──────────────────────────────────────┘
+
+
+后续请求:
+┌─────────┐  Authorization:       ┌──────────────────────────────────────┐
+│  客户端  │   Bearer <token>      │  Spring Security FilterChain         │
+│          │ ──────────────────── →│                                    │
+│          │                        │  ③ PreAuthenticationFilter
+│          │                        │     ├─ 从Header取 Authorization
+│          │                        │     ├─ 去掉 "Bearer " 前缀
+│          │                        │     ├─ AuthUtils.auth(token) → Redis验证
+│          │                        │     │   └─ 返回 username (null则token无效)
+│          │                        │     ├─ ThreadContext.put(ACCESS_TOKEN, token)
+│          │                        │     ├─ ThreadContext.put(USERNAME, username)
+│          │                        │     ├─ AuthUtils.loginInfo(token) → 加载loginInfo
+│          │                        │     └─ ThreadContext.put(USER_ID, userId)
+│          │                        │                                    │
+│          │                        │  PreAuthenticatedAuthenticationProvider
+│          │                        │     └─ PreAuthenticationUserDetailsService
+│          │                        │         └─ AuthUtils.userDetails(token) → Redis
+│          │                        │             └─ 返回 User(username, pwd, authorities)
+│          │                        │                                    │
+│          │                        │  SecurityContext 建立完成
+│          │                        │     └─ @PreAuthorize 等注解可正常工作
+│          │                        │                                    │
+└─────────┘                        └──────────────────────────────────────┘
+```
+
+### Redis 数据结构
+
+`AuthUtils.login()` 执行后在 Redis 中创建以下数据（通过 Lua 脚本保证原子性）：
+
+| Redis Key | 类型 | 说明 |
+|-----------|------|------|
+| `auth:token:username` | Hash | field=token, value=username |
+| `auth:token:userdetails` | Hash | field=token, value=序列化的 Spring Security `User` 对象（JSON） |
+| `auth:token:authorities` | Hash | field=token, value=序列化的 `GrantedAuthority` 列表（JSON） |
+| `auth:token:login:info` | Hash | field=token, value=额外登录信息（IP、userId 等，JSON） |
+| `auth:{username}:token` | Set | 该用户名对应的所有 token（支持多端登录场景） |
+| `auth:token:ttl:zset` | ZSet | token 与过期时间戳（score），用于定时过期清理 |
+
+**核心设计要点：**
+- Token **不是 JWT**，而是 `StringUtils.uniqueKey(66)` 生成的 66 位随机字符串
+- 所有用户信息和权限都存储在 **Redis** 中，Token 本身不携带任何业务数据
+- 支持主动失效 Token（调用 `AuthUtils.logout(token)` 清除 Redis 数据）
+- 支持自动刷新 Token（`redis.auth.auto-refresh` 配置，默认 true）
+- Token 过期后自动清理并通过 Redis Pub/Sub 发布通知
+
+### AuthUtils 核心 API
+
+```java
+import com.awesomecopilot.cache.auth.AuthUtils;
+
+// ===== 登录（写入Redis）=====
+// 在 LoginSuccessHandler 中被调用
+AuthUtils.login(
+    username,           // 用户名
+    accessToken,        // 66位随机token
+    30L,                // 过期时间
+    TimeUnit.MINUTES,   // 时间单位
+    userDetails,        // Spring Security User对象（序列化存入Redis）
+    authorities,        // 权限列表（序列化存入Redis）
+    loginInfo,          // 额外信息：ip、userId等
+    false               // 是否单点登录（true则踢掉该用户其他token）
+);
+
+// ===== Token 验证 =====
+// 在 PreAuthenticationFilter 中被调用
+// 检查token是否存在且未过期，返回对应的username
+String username = AuthUtils.auth(accessToken);
+
+// ===== 获取 UserDetails =====
+// 在 PreAuthenticationUserDetailsService 中被调用
+User user = AuthUtils.userDetails(accessToken, User.class);
+
+// ===== 获取权限列表 =====
+List<GrantedAuthority> authorities = AuthUtils.authorities(accessToken, GrantedAuthority.class);
+
+// ===== 获取登录额外信息 =====
+Map<String, Object> loginInfo = AuthUtils.loginInfo(accessToken, Map.class);
+
+// ===== 登出（清除Redis）=====
+boolean success = AuthUtils.logout(accessToken);
+
+// ===== 清理过期token =====
+boolean hasExpired = AuthUtils.clearExpired();
+
+// ===== 根据token获取用户名 =====
+String username = AuthUtils.username(accessToken);
+
+// ===== 获取某用户的所有token =====
+Set<String> tokens = AuthUtils.tokens(username);
+```
+
+### 核心组件详解
+
+#### 过滤器链执行顺序
+
+| 顺序 | 组件 | 类 | 职责 |
+|------|------|----|------|
+| 1 | XSS过滤 | `XSSFilter` | 过滤请求参数中的恶意脚本（注册为 FilterRegistrationBean，order=MIN_VALUE） |
+| 2 | Body重复读 | `HttpServletRequestRepeatedReadFilter` | 包装 Request 使 Body 可重复读取（来自 copilot-web） |
+| 3 | 异常兜底 | `SecurityExceptionFilter` | 捕获过滤器链上未处理的异常，代理给 `RestSecurityExceptionAdvice` |
+| 4 | 验证码 | `VerifyCodeFilter` | 校验图片验证码（仅当 `pic-code.enabled=true` 时注册） |
+| 5 | **Token认证** | `PreAuthenticationFilter` | 从请求头提取 Bearer Token → Redis 验证 → 建立认证上下文 |
+| 6 | **登录处理** | `UsernamePasswordAuthenticationFilter` | 拦截 POST /login → 用户名密码认证 → 成功/失败处理 |
+
+#### PreAuthenticationFilter 工作原理
+
+```
+请求进入
+  │
+  ├─ 是登录请求(isLoginRequest)?  → 跳过，返回null，交给UsernamePasswordAuthenticationFilter处理
+  │
+  ├─ Authorization头为空?  → 响应 TOKEN_MISSING 错误，中断请求
+  │
+  ├─ 不以 "Bearer " 开头?  → 响应 TOKEN_INVALID 错误，中断请求
+  │
+  ├─ AuthUtils.auth(token) 返回 null?  → token无效/过期，返回null
+  │
+  └─ AuthUtils.auth(token) 返回 username
+       ├─ ThreadContext.put(ACCESS_TOKEN, token)
+       ├─ ThreadContext.put(USERNAME, username)
+       ├─ AuthUtils.loginInfo(token) → 加载loginInfo
+       ├─ ThreadContext.put(USER_ID, loginInfo.userId)
+       └─ 返回 username 作为 PreAuthenticated Principal
+           → 触发 PreAuthenticatedAuthenticationProvider
+           → 触发 PreAuthenticationUserDetailsService（从Redis加载UserDetails+authorities）
+           → SecurityContext 建立完成
+```
+
+#### LoginSuccessHandler 工作原理
+
+```java
+// 登录成功后的处理流程：
+// 1. 生成 66 位随机 accessToken
+String accessToken = StringUtils.uniqueKey(66);
+
+// 2. 从 SecurityContext 获取认证信息
+String username = SecurityContextHolder.getContext().getAuthentication().getName();
+User userDetails = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+List<? extends GrantedAuthority> authorities = ...getAuthentication().getAuthorities();
+
+// 3. 构建 loginInfo（包含 ip、userId 等）
+Map<String, Object> loginInfo = ThreadContext.get(LOGIN_INFO);
+loginInfo.put("ip", ServletUtils.getRemoteRealIP(request));
+loginInfo.put("userId", ThreadContext.get(USER_ID));
+
+// 4. 调用 AuthUtils.login() 将所有数据写入 Redis
+AuthUtils.login(username, accessToken, 30L, TimeUnit.MINUTES,
+               userDetails, authorities, loginInfo, false);
+
+// 5. 响应 Token 给客户端
+Result result = Results.success().data(accessToken).build();
+RestUtils.writeJson(response, result);
+```
+
+**关键点：** `UserDetailsService.loadUserByUsername()` 中需要通过 `ThreadContext.put(ThreadLocalSecurityConstants.USER_ID, userId)` 将 userId 放入 ThreadLocal，`LoginSuccessHandler` 会从中取出并写入 Redis 的 loginInfo。
+
+#### LogoutSuccessHandler 工作原理
+
+```
+请求 /logout
+  │
+  ├─ 从请求头取 Authorization
+  ├─ 去掉 "Bearer " 前缀
+  ├─ AuthUtils.username(token) → 获取用户名
+  ├─ AuthUtils.logout(token)   → 清除 Redis 中所有相关数据
+  │   └─ 清除 auth:token:username、auth:token:userdetails、
+  │      auth:token:authorities、auth:token:login:info、
+  │      auth:{username}:token、auth:token:ttl:zset
+  │   └─ 清除 token:authentication 哈希
+  │   └─ 发布登出通知到 auth:logout:channel
+  └─ 响应成功/失败结果
+```
+
+#### WildcardGrantedAuthority 通配符匹配规则
+
+```java
+// 权限匹配逻辑（WildcardGrantedAuthority.implies()）：
+// 1. 精确匹配（大小写不敏感）
+// 2. 通配符匹配：如果权限以 ":*" 结尾，则匹配该前缀下的所有权限
+
+// 示例：
+// 数据库配置 "sys:*" → 可匹配:
+//   "sys:user:list" ✅
+//   "sys:user:save" ✅
+//   "sys:menu:delete" ✅
+//   "order:read" ❌（前缀不匹配）
+
+// 数据库配置 "*" → 可匹配任何权限
+
+// 在 @PreAuthorize 中使用:
+@PreAuthorize("hasPermission('sys:user:list')")  // 使用 hasPermission 而非 hasAuthority
+```
+
+**注意：** 通配符匹配通过 `WildcardMethodSecurityExpressionRoot.hasPermission()` 方法实现，所以必须使用 `hasPermission()` 表达式而非 `hasAuthority()`。
+
+### CopilotWebSecurityAutoConfig 自动配置清单
+
+引入 Starter 后，以下 Bean 会被自动注册：
+
+| Bean | 条件 | 说明 |
+|------|------|------|
+| `SecurityFilterChain` | 无条件 | 主过滤器链（CSRF禁用、无状态Session、白名单、认证过滤器） |
+| `AuthenticationManager` | 无条件 | 认证管理器（包含 PreAuth + Dao 两个 Provider） |
+| `PasswordEncoder` | `@ConditionalOnMissingBean` | BCrypt 编码器（业务未自定义时使用默认） |
+| `PreAuthenticationFilter` | 无条件 | Token 认证过滤器 |
+| `UsernamePasswordAuthenticationFilter` | 无条件 | 登录处理过滤器 |
+| `DaoAuthenticationProvider` | `user-pass-login.enabled=true` | 用户名密码认证 Provider |
+| `PreAuthenticatedAuthenticationProvider` | 无条件 | Token 预认证 Provider |
+| `PreAuthenticationUserDetailsService` | `@ConditionalOnMissingBean` | Token 认证时加载 UserDetails |
+| `LoginSuccessHandler` | 无条件 | 登录成功处理 |
+| `LoginFailureHandler` | 无条件 | 登录失败处理 |
+| `LogoutSuccessHandler` | 无条件 | 登出处理 |
+| `RestAuthenticationEntryPoint` | 无条件 | 401 未认证处理 |
+| `RestAccessDeniedHandler` | 无条件 | 403 权限不足处理 |
+| `RestSecurityExceptionAdvice` | `@ConditionalOnMissingBean` | 安全异常统一处理 |
+| `GrantedAuthorityDefaults` | 无条件 | 角色前缀配置（默认 ROLE_） |
+| `MethodSecurityExpressionHandler` | 无条件 | 通配符权限表达式处理器 |
+| `VerifyCodeFilter` | `pic-code.enabled=true` | 验证码过滤器 |
+| `VerifyCodeController` | `pic-code.enabled=true` | 验证码 Controller |
+| `XSSFilter` | 无条件 | XSS 防护（FilterRegistrationBean） |
+| `SecurityExceptionFilter` | 无条件 | 异常兜底过滤器 |
+
+### SecurityFilterChain 核心配置
+
+```java
+// 自动配置的 SecurityFilterChain 关键行为：
+
+// 1. 禁用 CSRF（RESTful API 不需要）
+http.csrf(AbstractHttpConfigurer::disable);
+
+// 2. 无状态 Session（不创建 HttpSession）
+http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+// 3. 异常处理：未认证返回 JSON 格式错误（非重定向到登录页）
+http.exceptionHandling(ex -> ex.authenticationEntryPoint(restAuthenticationEntryPoint));
+
+// 4. 授权规则
+http.authorizeHttpRequests(authorize -> {
+    authorize.requestMatchers(whiteList).permitAll();  // 白名单放行
+    authorize.anyRequest().authenticated();             // 其他都需要认证
+});
+
+// 5. 登录处理
+http.formLogin(form -> {
+    form.loginProcessingUrl("/login");  // 登录URL
+});
+
+// 6. 登出处理
+http.logout(logout -> {
+    logout.logoutUrl("/logout");
+    logout.logoutSuccessHandler(logoutSuccessHandler());
+});
+```
+
+### 方法级权限控制总览
+
+Starter 通过 `@EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true, jsr250Enabled = true)` 启用了三类注解：
+
+| 注解 | 示例 | 说明 |
+|------|------|------|
+| `@PreAuthorize` | `@PreAuthorize("hasPermission('sys:user:list')")` | **推荐**，支持 SpEL 表达式和通配符权限 |
+| `@PreAuthorize` | `@PreAuthorize("hasRole('ADMIN')")` | 角色检查（自动补 ROLE_ 前缀） |
+| `@Secured` | `@Secured("ROLE_ADMIN")` | 角色检查（需显式写 ROLE_ 前缀） |
+| `@RolesAllowed` | `@RolesAllowed({"ROLE_ADMIN"})` | JSR-250 标准角色检查 |
+
+### 微服务场景下的使用模式
+
+#### 模式一：认证中心（如 admin-service）
+
+完整启用登录 + Token 认证 + 权限检查：
+
+```yaml
+copilot:
+  security6:
+    white-list:
+      - /login          # 登录接口不需要认证
+    user-pass-login:
+      enabled: true     # 开启用户名密码登录
+```
+
+需要提供：
+- `UserDetailsService` 实现（从数据库加载用户+角色+权限）
+
+#### 模式二：仅授权（其他微服务）
+
+不开启登录功能，仅做 Token 验证 + 权限检查：
+
+```yaml
+copilot:
+  security6:
+    user-pass-login:
+      enabled: false    # 不开启登录功能
+```
+
+**工作原理：**
+- `PreAuthenticationFilter` 仍然生效，从请求头取 Token 并在 Redis 验证
+- `PreAuthenticationUserDetailsService` 从 Redis 加载 UserDetails 和权限
+- `@PreAuthorize` 注解正常工作
+- 不注册 `DaoAuthenticationProvider`，不处理 `/login` 请求
+- Token 由认证中心（admin-service）登录后获取，通过网关或 Feign 传递
+
+**注意：** 此模式下 `UserDetailsService` Bean 不是必需的。
