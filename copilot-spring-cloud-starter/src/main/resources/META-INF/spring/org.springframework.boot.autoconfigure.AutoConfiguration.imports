@@ -1,1 +1,2 @@
 com.awesomecopilot.cloud.autoconfig.CopilotSpringCloudAutoConfiguration
+com.awesomecopilot.cloud.autoconfig.DefaultLBConfig
