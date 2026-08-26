@@ -11,7 +11,6 @@
 - ✅ URL 白名单配置
 - ✅ 图片验证码功能
 - ✅ 防重复提交（@AntiDupSubmit）
-- ✅ XSS 防护
 - ✅ 登录/登出成功失败处理
 - ✅ 异常统一处理
 
@@ -311,10 +310,6 @@ public Result submit() { ... }
 
 需确保配置 `copilot.security6.feature.anti-duplicate-submit=true`（默认开启）
 
-### 3. XSS 防护
-
-XSS 过滤器默认启用，自动过滤请求中的恶意脚本。
-
 ## API 端点
 
 | 端点 | 方法 | 说明 |
@@ -492,12 +487,11 @@ Set<String> tokens = AuthUtils.tokens(username);
 
 | 顺序 | 组件 | 类 | 职责 |
 |------|------|----|------|
-| 1 | XSS过滤 | `XSSFilter` | 过滤请求参数中的恶意脚本（注册为 FilterRegistrationBean，order=MIN_VALUE） |
-| 2 | Body重复读 | `HttpServletRequestRepeatedReadFilter` | 包装 Request 使 Body 可重复读取（来自 copilot-web） |
-| 3 | 异常兜底 | `SecurityExceptionFilter` | 捕获过滤器链上未处理的异常，代理给 `RestSecurityExceptionAdvice` |
-| 4 | 验证码 | `VerifyCodeFilter` | 校验图片验证码（仅当 `pic-code.enabled=true` 时注册） |
-| 5 | **Token认证** | `PreAuthenticationFilter` | 从请求头提取 Bearer Token → Redis 验证 → 建立认证上下文 |
-| 6 | **登录处理** | `UsernamePasswordAuthenticationFilter` | 拦截 POST /login → 用户名密码认证 → 成功/失败处理 |
+| 1 | Body重复读 | `HttpServletRequestRepeatedReadFilter` | 包装 Request 使 Body 可重复读取（来自 copilot-web） |
+| 2 | 异常兜底 | `SecurityExceptionFilter` | 捕获过滤器链上未处理的异常，代理给 `RestSecurityExceptionAdvice` |
+| 3 | 验证码 | `VerifyCodeFilter` | 校验图片验证码（仅当 `pic-code.enabled=true` 时注册） |
+| 4 | **Token认证** | `PreAuthenticationFilter` | 从请求头提取 Bearer Token → Redis 验证 → 建立认证上下文 |
+| 5 | **登录处理** | `UsernamePasswordAuthenticationFilter` | 拦截 POST /login → 用户名密码认证 → 成功/失败处理 |
 
 #### PreAuthenticationFilter 工作原理
 
@@ -614,7 +608,6 @@ RestUtils.writeJson(response, result);
 | `MethodSecurityExpressionHandler` | 无条件 | 通配符权限表达式处理器 |
 | `VerifyCodeFilter` | `pic-code.enabled=true` | 验证码过滤器 |
 | `VerifyCodeController` | `pic-code.enabled=true` | 验证码 Controller |
-| `XSSFilter` | 无条件 | XSS 防护（FilterRegistrationBean） |
 | `SecurityExceptionFilter` | 无条件 | 异常兜底过滤器 |
 
 ### SecurityFilterChain 核心配置

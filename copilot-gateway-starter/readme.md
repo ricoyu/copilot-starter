@@ -90,7 +90,24 @@ copilot:
 
 ### 5. CORS 跨域配置
 
-默认启用 CORS 支持，可通过 Spring Cloud Gateway 原生配置进行调整。
+默认启用 CORS 支持，使用 Spring Cloud Gateway 原生的 `GlobalCorsProperties` 在 HandlerMapping 层面处理跨域，与 Gateway 路由机制完美集成。
+
+```yaml
+copilot:
+  gateway:
+    cors:
+      enabled: true                        # 是否启用 CORS，默认 true
+      allow-credentials: false             # 是否允许携带 Cookie
+      max-age: 3600                        # 预检请求缓存时间（秒）
+      allowed-origins:                     # 允许的跨域源
+        - "*"
+      allowed-headers:                     # 允许的请求头
+        - "*"
+      allowed-methods:                     # 允许的请求方法
+        - "*"
+```
+
+> **注意：** 当 `allow-credentials: true` 时，`allowed-origins` 不能设置为 `*`，必须指定具体域名，否则浏览器会拦截响应。
 
 ## 配置项说明
 
@@ -102,6 +119,12 @@ copilot:
 | `copilot.gateway.auth.client-secret` | String | - | OAuth2 Client Secret |
 | `copilot.gateway.auth.auth-server-name` | String | - | 认证服务名 |
 | `copilot.gateway.auth.should-skip-urls` | String | - | 跳过认证的 URL |
+| `copilot.gateway.cors.enabled` | boolean | true | 是否启用 CORS 跨域 |
+| `copilot.gateway.cors.allow-credentials` | boolean | false | 是否允许携带 Cookie |
+| `copilot.gateway.cors.max-age` | Long | 3600 | 预检请求缓存时间（秒） |
+| `copilot.gateway.cors.allowed-origins` | List | ["*"] | 允许的跨域源 |
+| `copilot.gateway.cors.allowed-headers` | List | ["*"] | 允许的请求头 |
+| `copilot.gateway.cors.allowed-methods` | List | ["*"] | 允许的请求方法 |
 
 ## 依赖说明
 

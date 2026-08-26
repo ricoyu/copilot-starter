@@ -6,7 +6,6 @@ import com.awesomecopilot.security6.filter.PreAuthenticationFilter;
 import com.awesomecopilot.security6.filter.SecurityExceptionFilter;
 import com.awesomecopilot.security6.filter.UsernamePasswordAuthenticationFilter;
 import com.awesomecopilot.security6.filter.VerifyCodeFilter;
-import com.awesomecopilot.security6.filter.XSSFilter;
 import com.awesomecopilot.security6.handler.LoginFailureHandler;
 import com.awesomecopilot.security6.handler.LoginSuccessHandler;
 import com.awesomecopilot.security6.handler.LogoutSuccessHandler;
@@ -37,6 +36,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationProvider;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter;
 
 import java.util.List;
@@ -95,10 +95,6 @@ public class CopilotWebSecurityAutoConfig {
 					authorize.requestMatchers(anonymousUrls()).permitAll();
 					authorize.anyRequest().authenticated();
 				});
-
-		http.formLogin(form -> {
-			form.loginProcessingUrl(properties.getUserPassLogin().getLoginUrl());
-		});
 
 		http.logout(logout -> logout
 				.logoutUrl(properties.getUserPassLogin().getLogoutUrl())
@@ -206,17 +202,9 @@ public class CopilotWebSecurityAutoConfig {
 		UsernamePasswordAuthenticationFilter authenticationFilter = new UsernamePasswordAuthenticationFilter();
 		authenticationFilter.setAuthenticationSuccessHandler(loginSuccessHandler());
 		authenticationFilter.setAuthenticationFailureHandler(loginFailureHandler());
-		//authenticationFilter.setRequiresAuthenticationRequestMatcher(new AntPathRequestMatcher(properties.getUserPassLogin().getLoginUrl(), "POST"));
+		authenticationFilter.setRequiresAuthenticationRequestMatcher(new AntPathRequestMatcher(properties.getUserPassLogin().getLoginUrl(), "POST"));
 		authenticationFilter.setAuthenticationManager(authenticationManager);
 		return authenticationFilter;
-	}
-
-	@Bean
-	public FilterRegistrationBean<XSSFilter> xssFilter() {
-		FilterRegistrationBean<XSSFilter> filter = new FilterRegistrationBean<>();
-		filter.setFilter(new XSSFilter());
-		filter.setOrder(Integer.MIN_VALUE);
-		return filter;
 	}
 
 	@Bean
