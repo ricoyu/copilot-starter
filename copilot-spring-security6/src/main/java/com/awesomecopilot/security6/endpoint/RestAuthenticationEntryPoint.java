@@ -35,6 +35,7 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
 			HttpServletRequest request,
 			HttpServletResponse response,
 			AuthenticationException authException) throws IOException {
+		logger.info("commence 开始, 未认证访问, uri={}, exception={}", request.getRequestURI(), authException.getClass().getSimpleName());
 		logger.error("", authException);
 		Result result = Results.status(TOKEN_EXPIRED).build();
 		RestUtils.writeJson(response, result);

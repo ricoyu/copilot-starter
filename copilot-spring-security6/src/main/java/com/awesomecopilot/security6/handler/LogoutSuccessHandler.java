@@ -33,13 +33,15 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class LogoutSuccessHandler implements org.springframework.security.web.authentication.logout.LogoutSuccessHandler {
 	
-	private static final Logger log = getLogger(LoginSuccessHandler.class);
+	private static final Logger log = getLogger(LogoutSuccessHandler.class);
 	
 	@Override
 	public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
 		String accessToken = request.getHeader(AUTHORIZATION_HEADER);
+		log.info("onLogoutSuccess 开始, uri={}", request.getRequestURI());
 		
 		if (isBlank(accessToken)) {
+			log.info("onLogoutSuccess >> token缺失, uri={}", request.getRequestURI());
 			Result result = Results.status(TOKEN_MISSING).build();
 			RestUtils.writeJson(response, result);
 			return;
@@ -47,6 +49,7 @@ public class LogoutSuccessHandler implements org.springframework.security.web.au
 		
 		boolean startsWith = accessToken.startsWith(BEARER_TOKEN_PREFIX);
 		if (!startsWith) {
+			log.info("onLogoutSuccess >> token格式无效, uri={}", request.getRequestURI());
 			Result result = Results.status(TOKEN_INVALID).build();
 			RestUtils.writeJson(response, result);
 			return;
@@ -56,6 +59,7 @@ public class LogoutSuccessHandler implements org.springframework.security.web.au
 		accessToken = accessToken.replaceAll(BEARER_TOKEN_PREFIX, "");
 		String actualToken = null;
 		if (isBlank(accessToken)) {
+			log.info("onLogoutSuccess >> 去除前缀后token为空, uri={}", request.getRequestURI());
 			Result result = Results.status(TOKEN_MISSING).build();
 			RestUtils.writeJson(response, result);
 			return;
@@ -64,10 +68,12 @@ public class LogoutSuccessHandler implements org.springframework.security.web.au
 		String username = AuthUtils.username(accessToken);
 		boolean success = AuthUtils.logout(accessToken);
 		if (!success) {
+			log.info("onLogoutSuccess >> 登出失败, token可能已过期, username={}", username);
 			logoutFail(response);
 			return;
 		}
 		
+		log.info("onLogoutSuccess 结束, 登出成功, username={}", username);
 		logoutSuccess(response, username);
 	}
 	

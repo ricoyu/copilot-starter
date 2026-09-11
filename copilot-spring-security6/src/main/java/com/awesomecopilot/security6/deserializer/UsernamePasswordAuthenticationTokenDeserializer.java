@@ -10,6 +10,8 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.MissingNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -33,6 +35,8 @@ import java.util.List;
  */
 public class UsernamePasswordAuthenticationTokenDeserializer extends JsonDeserializer<UsernamePasswordAuthenticationToken> {
 	
+	private static final Logger log = LoggerFactory.getLogger(UsernamePasswordAuthenticationTokenDeserializer.class);
+	
 	/**
 	 * This method construct {@link UsernamePasswordAuthenticationToken} object from serialized json.
 	 *
@@ -44,6 +48,7 @@ public class UsernamePasswordAuthenticationTokenDeserializer extends JsonDeseria
 	 */
 	@Override
 	public UsernamePasswordAuthenticationToken deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+		log.info("deserialize 开始");
 		UsernamePasswordAuthenticationToken token = null;
 		ObjectMapper mapper = (ObjectMapper) jp.getCodec();
 		JsonNode jsonNode = mapper.readTree(jp);
@@ -51,6 +56,7 @@ public class UsernamePasswordAuthenticationTokenDeserializer extends JsonDeseria
 		JsonNode principalNode = readJsonNode(jsonNode, "principal");
 		Object principal = null;
 		if (principalNode.isObject()) {
+			log.info("deserialize >> principal为对象, 使用readValue解析");
 			principal = mapper.readValue(principalNode.traverse(mapper), Object.class);
 		} else {
 			principal = principalNode.asText();
@@ -70,11 +76,14 @@ public class UsernamePasswordAuthenticationTokenDeserializer extends JsonDeseria
 		try {
 			authorities = mapper.convertValue(jsonNode.get("authorities"), new TypeReference<List<WildcardGrantedAuthority>>() {});
 		} catch (Exception e) {
+			log.info("deserialize >> WildcardGrantedAuthority转换失败, 回退到SimpleGrantedAuthority");
 			authorities = mapper.convertValue(jsonNode.get("authorities"), new TypeReference<List<SimpleGrantedAuthority>>() {});
 		}
 		if (authenticated) {
+			log.info("deserialize >> authenticated=true, 创建已认证token, principal={}", principal);
 			token = new UsernamePasswordAuthenticationToken(principal, credentials, authorities);
 		} else {
+			log.info("deserialize >> authenticated=false, 创建未认证token, principal={}", principal);
 			token = new UsernamePasswordAuthenticationToken(principal, credentials);
 		}
 		JsonNode detailsNode = readJsonNode(jsonNode, "details");
@@ -83,6 +92,7 @@ public class UsernamePasswordAuthenticationTokenDeserializer extends JsonDeseria
 		} else {
 			token.setDetails(detailsNode);
 		}
+		log.info("deserialize 结束, authenticated={}, authorities={}", authenticated, authorities != null ? authorities.size() : 0);
 		return token;
 	}
 	

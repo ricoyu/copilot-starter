@@ -10,9 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
 
@@ -35,17 +33,12 @@ public class SecurityExceptionFilter extends OncePerRequestFilter {
 	
 	public static final String ROUTE_CAUSE = "routeCause";
 	
-	@Autowired
-	private HandlerExceptionResolver handlerExceptionResolver;
-	
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
 		try {
 			chain.doFilter(request, response);
 		} catch (Exception e) {
-			log.error("", e);
-			//ThreadContext.put(ROUTE_CAUSE, e);
-			//handlerExceptionResolver.resolveException(request, response, null, e);
+			log.error("doFilterInternal >> 过滤器链异常, uri={}, exception={}", request.getRequestURI(), e.getClass().getSimpleName(), e);
 			Result result = Results.status(ErrorTypes.INTERNAL_SERVER_ERROR).build();
 			RestUtils.writeJson(response, result);
 		}

@@ -61,6 +61,11 @@ spring:
 - `CopilotErrorWebExceptionHandler` - 网关层统一异常处理
 - `GatewayExceptionHandlerAdvice` - 异常处理委托
 
+HTTP 状态码约定：
+- `ResponseStatusException`（含静态资源 404 的 `NoResourceFoundException`）：**保留异常自带的状态码**（404 不再伪装成 200，否则浏览器会把 200 的 JSON 错误体当 JS 执行导致页面空白）
+- `NotFoundException`（网关找不到路由/服务）：返回 404
+- `GatewayException`（鉴权失败等业务异常）：返回 200 + 错误码 JSON，兼容既有前端
+
 ### 3. JWT Token 认证
 
 ```yaml

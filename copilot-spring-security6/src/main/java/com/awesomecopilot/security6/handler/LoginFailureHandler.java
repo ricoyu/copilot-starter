@@ -26,10 +26,12 @@ public class LoginFailureHandler implements AuthenticationFailureHandler {
 	@Override
 	public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
 	                                    AuthenticationException e) throws IOException, ServletException {
+		log.info("onAuthenticationFailure 开始, uri={}, exception={}", request.getRequestURI(), e.getClass().getSimpleName());
 		log.error("", e);
 
 		ErrorType errorType = SpringSecurityExceptions.errorType(e.getClass());
 		if (errorType == null) {
+			log.info("onAuthenticationFailure >> 未匹配到具体错误类型, 使用默认INTERNAL_SERVER_ERROR, exception={}", e.getClass().getSimpleName());
 			//org.springframework.security.authentication.InternalAuthenticationServiceException:
 			//org.springframework.security.authentication.BadCredentialsException: 用户名或密码错误
 			//LockedException, DisabledException, AccountExpiredException, BadCredentialsException
@@ -48,6 +50,7 @@ public class LoginFailureHandler implements AuthenticationFailureHandler {
 			}*/
 			errorType = INTERNAL_SERVER_ERROR;
 		}
+		log.info("onAuthenticationFailure 结束, code={}, message={}", errorType.code(), errorType.message());
 		Result result = Results.status(errorType).build();
 		RestUtils.writeJson(response, result);
 	}

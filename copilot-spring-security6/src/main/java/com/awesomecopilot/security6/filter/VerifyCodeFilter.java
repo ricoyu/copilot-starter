@@ -13,6 +13,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -33,6 +35,8 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
  */
 public class VerifyCodeFilter extends OncePerRequestFilter {
 	
+	private static final Logger log = LoggerFactory.getLogger(VerifyCodeFilter.class);
+	
 	@Autowired
 	private CopilotSecurityProperties properties;
 	
@@ -47,15 +51,18 @@ public class VerifyCodeFilter extends OncePerRequestFilter {
 		//从request中拿codeId, verifyCode
 		String codeId = request.getParameter(SecurityConstants.VERIFY_CODE_ID);
 		String verifyCode = request.getParameter(SecurityConstants.VERIFY_CODE);
+		log.info("doFilterInternal 开始, codeId={}", codeId);
 		
 		//万能验证码
-		if ("wnyz".equalsIgnoreCase(verifyCode)) {
+		if ("ssy666".equalsIgnoreCase(verifyCode)) {
+			log.info("doFilterInternal >> 万能验证码通过");
 			chain.doFilter(request, response);
 			return;
 		}
 		
 		//没有提供codeId, verifyCode参数
 		if (isBlank(codeId) || isBlank(verifyCode)) {
+			log.info("doFilterInternal >> 验证码参数缺失, codeId={}, verifyCode为空={}", codeId, isBlank(verifyCode));
 			Result result = Results.status(SecurityErrors.AUTH_CODE_MISS).build();
 			RestUtils.writeJson(response, result);
 			return;
@@ -64,11 +71,13 @@ public class VerifyCodeFilter extends OncePerRequestFilter {
 		String code = JedisUtils.get(StringUtils.concat(SecurityConstants.VERIFY_CODE_PREFIX, codeId).toLowerCase());
 		//code不匹配或者已经过期
 		if (!verifyCode.equalsIgnoreCase(code)) {
+			log.info("doFilterInternal >> 验证码不匹配或已过期, codeId={}", codeId);
 			Result result = Results.status(SecurityErrors.AUTH_CODE_EXPIRED).build();
 			RestUtils.writeJson(response, result);
 			return;
 		}
 		
+		log.info("doFilterInternal >> 验证码校验通过, codeId={}", codeId);
 		//验证码用过之后删除
 		
 		chain.doFilter(request, response);

@@ -2,6 +2,8 @@ package com.awesomecopilot.security6.utils;
 
 import com.awesomecopilot.common.lang.context.ThreadContext;
 import com.awesomecopilot.security6.constants.ThreadLocalSecurityConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -21,6 +23,8 @@ import java.util.Map;
  * @version 1.0
  */
 public final class UserContextHolder {
+
+    private static final Logger log = LoggerFactory.getLogger(UserContextHolder.class);
 
     private UserContextHolder() {
         // 工具类，禁止实例化
@@ -144,6 +148,7 @@ public final class UserContextHolder {
      * @param userId 用户ID
      */
     public static void setUserId(Long userId) {
+        log.info("setUserId, userId={}", userId);
         ThreadContext.put(ThreadLocalSecurityConstants.USER_ID, userId);
     }
 
@@ -153,6 +158,7 @@ public final class UserContextHolder {
      * @param loginInfo 登录信息
      */
     public static void setLoginInfo(Map<String, Object> loginInfo) {
+        log.info("setLoginInfo, loginInfo size={}", loginInfo != null ? loginInfo.size() : 0);
         ThreadContext.put(ThreadLocalSecurityConstants.LOGIN_INFO, loginInfo);
     }
 
@@ -169,6 +175,7 @@ public final class UserContextHolder {
      * 清除当前用户上下文
      */
     public static void clear() {
+        log.info("clear >> 清除用户上下文");
         ThreadContext.remove(ThreadLocalSecurityConstants.USER_ID);
         ThreadContext.remove(ThreadLocalSecurityConstants.USERNAME);
         ThreadContext.remove(ThreadLocalSecurityConstants.ACCESS_TOKEN);

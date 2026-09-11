@@ -8,6 +8,8 @@ import com.awesomecopilot.security6.listener.AuthenticationFailureListener;
 import com.awesomecopilot.security6.processor.AuthUtilsInitializePostProcessor;
 import com.awesomecopilot.security6.processor.ObjectMapperBeanPostProcessor;
 import com.awesomecopilot.security6.properties.CopilotSecurityProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -31,6 +33,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 //@EnableConfigurationProperties({CopilotSecurityProperties.class})
 public class CopilotSecurityFeatureAutoConfig implements WebMvcConfigurer {
 	
+	private static final Logger log = LoggerFactory.getLogger(CopilotSecurityFeatureAutoConfig.class);
+	
 	@Autowired
 	private CopilotSecurityProperties properties;
 	
@@ -47,7 +51,10 @@ public class CopilotSecurityFeatureAutoConfig implements WebMvcConfigurer {
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
 		if (properties.getFeature().isAntiDuplicateSubmit()) {
+			log.info("addInterceptors >> 防重复提交拦截器已启用");
 			registry.addInterceptor(new TokenBasedAntiDupSubmitIntercepter()); //实现防止重复提交
+		} else {
+			log.info("addInterceptors >> 防重复提交拦截器未启用");
 		}
 		WebMvcConfigurer.super.addInterceptors(registry);
 	}

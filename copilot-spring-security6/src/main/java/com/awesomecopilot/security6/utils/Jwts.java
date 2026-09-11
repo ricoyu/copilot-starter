@@ -47,10 +47,13 @@ public final class Jwts {
 			try {
 				return io.jsonwebtoken.Jwts.parser().setSigningKey(key).parseClaimsJws(claimsJws);
 			} catch (Throwable e) {
+				log.info("parseClaimsJws >> JWT解析失败, exception={}", e.getClass().getSimpleName());
 				log.error("", e);
 				if (errorConsumer != null) {
+					log.info("parseClaimsJws >> 使用自定义errorConsumer处理异常");
 					errorConsumer.accept(e);
 				} else {
+					log.info("parseClaimsJws >> 无自定义errorConsumer, 抛出JwtTokenParseException");
 					throw new JwtTokenParseException("", e);
 				}
 			}

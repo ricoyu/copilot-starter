@@ -10,6 +10,8 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.MissingNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -26,6 +28,8 @@ import java.util.Set;
  * @since 4.2
  */
 public class UserDeserializer extends JsonDeserializer<User> {
+
+	private static final Logger log = LoggerFactory.getLogger(UserDeserializer.class);
 
 	/**
 	 * This method will create {@link User} object. It will ensure successful object creation even if password key is null in
@@ -50,19 +54,23 @@ public class UserDeserializer extends JsonDeserializer<User> {
 		try {
 			authorities = mapper.convertValue(jsonNode.get("authorities"), new TypeReference<Set<WildcardGrantedAuthority>>() {});
 		}catch (Exception e){
+			log.info("deserialize >> WildcardGrantedAuthority转换失败, 回退到SimpleGrantedAuthority");
 			authorities = mapper.convertValue(jsonNode.get("authorities"), new TypeReference<Set<SimpleGrantedAuthority>>() {});
 		}
 		JsonNode password = readJsonNode(jsonNode, "password");
+		String username = readJsonNode(jsonNode, "username").asText();
 		User result =  new User(
-				readJsonNode(jsonNode, "username").asText(), password.asText(""),
+				username, password.asText(""),
 				readJsonNode(jsonNode, "enabled").asBoolean(), readJsonNode(jsonNode, "accountNonExpired").asBoolean(),
 				readJsonNode(jsonNode, "credentialsNonExpired").asBoolean(),
 				readJsonNode(jsonNode, "accountNonLocked").asBoolean(), authorities
 		);
 
 		if (password.asText(null) == null) {
+			log.info("deserialize >> 密码为空, 清除凭证, username={}", username);
 			result.eraseCredentials();
 		}
+		log.info("deserialize 结束, username={}, authorities={}", username, authorities != null ? authorities.size() : 0);
 		return result;
 	}
 

@@ -34,12 +34,14 @@ public class UsernamePasswordAuthenticationFilter extends org.springframework.se
 	
 	@Override
 	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
+		log.info("attemptAuthentication 开始, uri={}", request.getRequestURI());
 		Authentication token = null;
 		
 		// 1 尝试表单提交方式获取用户名密码
 		String username = obtainUsername(request);
 		String password = obtainPassword(request);
 		if (isNotBlank(username) && isNotBlank(password)) {
+			log.info("attemptAuthentication >> 表单提交认证, username={}", username);
 			token = new UsernamePasswordAuthenticationToken(username, password);
 			ThreadContext.put(CopilotSecurityConstants.SPRING_SECURITY_FORM_USERNAME_KEY, username);
 		}
@@ -51,6 +53,7 @@ public class UsernamePasswordAuthenticationFilter extends org.springframework.se
 		//从request body 中获取用户名密码
 		String requestBody = ServletUtils.readRequestBody(request);
 		if (isBlank(requestBody)) {
+			log.info("attemptAuthentication >> request body为空, 使用空凭证认证");
 			token = new UsernamePasswordAuthenticationToken("", "");
 			return this.getAuthenticationManager().authenticate(token);
 		}
@@ -58,11 +61,13 @@ public class UsernamePasswordAuthenticationFilter extends org.springframework.se
 		username = JsonPathUtils.readNode(requestBody, "$.username");
 		password = JsonPathUtils.readNode(requestBody, "$.password");
 		if (isNotBlank(username) && isNotBlank(password)) {
+			log.info("attemptAuthentication >> request body认证, username={}", username);
 			token = new UsernamePasswordAuthenticationToken(username, password);
 			ThreadContext.put(CopilotSecurityConstants.SPRING_SECURITY_FORM_USERNAME_KEY, username);
 			return this.getAuthenticationManager().authenticate(token);
 		}
 		
+		log.info("attemptAuthentication >> 未能从请求中提取到用户名密码, 使用空凭证认证");
 		token = new UsernamePasswordAuthenticationToken("", "");
 		return this.getAuthenticationManager().authenticate(token);
 	}

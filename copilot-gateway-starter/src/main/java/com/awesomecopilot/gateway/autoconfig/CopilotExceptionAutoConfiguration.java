@@ -71,7 +71,7 @@ public class CopilotExceptionAutoConfiguration {
     }
 	
 	@Bean
-	public ErrorWebExceptionHandler errorWebExceptionHandler(ErrorAttributes errorAttributes) {
+	public ErrorWebExceptionHandler copilotErrorWebExceptionHandler(ErrorAttributes errorAttributes) {
 		DefaultErrorWebExceptionHandler exceptionHandler = new CopilotErrorWebExceptionHandler(
 				errorAttributes, new Resources(),
 				this.serverProperties.getError(), this.applicationContext);

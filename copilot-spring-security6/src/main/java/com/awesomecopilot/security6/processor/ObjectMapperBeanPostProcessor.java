@@ -8,6 +8,8 @@ import com.awesomecopilot.security6.mixin.GrantedAuthorityMixIn;
 import com.awesomecopilot.security6.mixin.SimpleGrantedAuthorityMixIn;
 import com.awesomecopilot.security6.mixin.UnmodifiableSetMixin;
 import com.awesomecopilot.security6.mixin.UserMixin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.core.Ordered;
@@ -36,6 +38,8 @@ import java.util.HashSet;
  */
 public class ObjectMapperBeanPostProcessor implements BeanPostProcessor, Ordered {
 	
+	private static final Logger log = LoggerFactory.getLogger(ObjectMapperBeanPostProcessor.class);
+	
 	@Override
 	public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
 		return bean;
@@ -44,6 +48,7 @@ public class ObjectMapperBeanPostProcessor implements BeanPostProcessor, Ordered
 	@Override
 	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
 		if (bean instanceof ObjectMapper) {
+			log.info("postProcessAfterInitialization >> 检测到ObjectMapper, 注册SpringSecurity MixIn, beanName={}", beanName);
 			ObjectMapper objectMapper = (ObjectMapper)bean;
 			objectMapper.addMixIn(GrantedAuthority.class, GrantedAuthorityMixIn.class);
 			objectMapper.addMixIn(SimpleGrantedAuthority.class, SimpleGrantedAuthorityMixIn.class);

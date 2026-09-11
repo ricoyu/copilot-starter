@@ -2,7 +2,7 @@ package com.awesomecopilot.boot.web.autoconfig;
 
 import com.awesomecopilot.boot.autoconfig.processor.ObjectMapperDecorationTracker;
 import com.awesomecopilot.json.ObjectMapperDecorator;
-import com.awesomecopilot.json.jackson.serializer.GlobalHtmlEscapeSerializer;
+import com.awesomecopilot.json.jackson.serializer.HtmlEscapeStringSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.springframework.beans.BeansException;
@@ -38,7 +38,7 @@ public class CopilotJacksonObjectMapperPostProcessor implements BeanPostProcesso
 		Boolean xssEnabled = environment.getProperty("copilot.filter.xss-enabled", Boolean.class);
 		if (Boolean.TRUE.equals(xssEnabled)) {
 			SimpleModule xssModule = new SimpleModule("xssModule");
-			xssModule.addSerializer(new GlobalHtmlEscapeSerializer());
+			xssModule.addSerializer(new HtmlEscapeStringSerializer());
 			objectMapper.registerModule(xssModule);
 		}
 		return bean;

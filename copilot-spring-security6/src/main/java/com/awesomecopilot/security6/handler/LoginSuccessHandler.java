@@ -52,6 +52,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 	                                    Authentication authentication) throws IOException, ServletException {
 		String accessToken = StringUtils.uniqueKey(66); //这是token
 		String username = SecurityContextHolder.getContext().getAuthentication().getName();
+		log.info("onAuthenticationSuccess 开始, username={}", username);
 		log.info("用户: {} 登录成功, Token: {}", username, accessToken);
 		User userDetails = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		List<? extends GrantedAuthority> authorities = (List<? extends GrantedAuthority>) SecurityContextHolder.getContext()
@@ -68,8 +69,10 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 	                     User userDetails, List<? extends GrantedAuthority> authorities,
 	                     String ip,
 	                     boolean singleSignOn) {
+		log.info("doLogin 开始, username={}, ip={}, singleSignOn={}", username, ip, singleSignOn);
 		Map<String, Object> loginInfo = ThreadContext.get(LOGIN_INFO);
 		if (loginInfo == null) {
+			log.info("doLogin >> loginInfo为空, 创建新的loginInfo, username={}", username);
 			loginInfo = new HashMap<>();
 			loginInfo.put("ip", ip);
 		} else {
@@ -81,6 +84,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 		long expires = 30L;
 		AuthUtils.login(username, accessToken, expires, TimeUnit.MINUTES, userDetails, authorities, loginInfo, singleSignOn);
 		Result result = Results.success().data(accessToken).build();
+		log.info("doLogin 结束, username={}, expires={}分钟", username, expires);
 		RestUtils.writeJson(response, result);
 	}
 	

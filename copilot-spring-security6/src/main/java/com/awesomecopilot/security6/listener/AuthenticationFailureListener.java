@@ -18,6 +18,11 @@ import org.springframework.security.authentication.event.AuthenticationFailureBa
 public class AuthenticationFailureListener implements ApplicationListener<AuthenticationFailureBadCredentialsEvent> {
 	@Override
 	public void onApplicationEvent(AuthenticationFailureBadCredentialsEvent event) {
+		String username = null;
+		if (event.getSource() != null && event.getAuthentication() != null) {
+			username = String.valueOf(event.getAuthentication().getPrincipal());
+		}
+		log.info("onApplicationEvent >> 登录失败(凭证错误), username={}, exception={}", username, event.getException().getClass().getSimpleName());
 		log.error("", event.getException());
 	}
 }

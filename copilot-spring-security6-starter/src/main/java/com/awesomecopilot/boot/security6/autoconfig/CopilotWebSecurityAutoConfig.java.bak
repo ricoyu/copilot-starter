@@ -12,8 +12,6 @@ import com.awesomecopilot.security6.handler.LogoutSuccessHandler;
 import com.awesomecopilot.security6.properties.CopilotSecurityProperties;
 import com.awesomecopilot.security6.service.PreAuthenticationUserDetailsService;
 import com.awesomecopilot.web.filter.HttpServletRequestRepeatedReadFilter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -60,8 +58,6 @@ import static com.awesomecopilot.security6.constants.SecurityConstants.PIC_CODE_
 @EnableConfigurationProperties({CopilotSecurityProperties.class})
 public class CopilotWebSecurityAutoConfig {
 
-	private static final Logger log = LoggerFactory.getLogger(CopilotWebSecurityAutoConfig.class);
-
 	@Autowired
 	private CopilotSecurityProperties properties;
 	
@@ -76,7 +72,6 @@ public class CopilotWebSecurityAutoConfig {
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-		log.info("securityFilterChain 开始配置");
 		/*
 		 * 默认情况下，Spring Security 会启用 CSRF 保护，而表单登录需要 CSRF token。
 		 * 如果不关闭, 到了UsernamePasswordAuthenticationFilter那边, 当前的url已经被重定向为/error了, 导致无法登录
@@ -127,27 +122,22 @@ public class CopilotWebSecurityAutoConfig {
 
 		CopilotSecurityProperties.Feature.PicCode picCode = properties.getFeature().getPicCode();
 		if (picCode != null && picCode.isEnabled()) {
-			log.info("securityFilterChain >> 验证码功能已启用");
 			//提供验证码校验能力
 			http.addFilterBefore(verifyCodeFilter(), UsernamePasswordAuthenticationFilter.class);
 		}
 
-		log.info("securityFilterChain 配置完成, whiteList={}, userPassLogin={}", properties.getWhiteList(), properties.getUserPassLogin().isEnabled());
 		return http.build();
 	}
 
 	@Bean
 	public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
-		log.info("authenticationManager 开始配置, userPassLogin={}", properties.getUserPassLogin().isEnabled());
 		AuthenticationManagerBuilder authenticationManagerBuilder =
 				http.getSharedObject(AuthenticationManagerBuilder.class);
 		//这个是基于Token认证, 用token从Redis中拿UserDetails
 		authenticationManagerBuilder.authenticationProvider(preAuthenticationProvider());
 		if (properties.getUserPassLogin().isEnabled()) {
-			log.info("authenticationManager >> 启用用户名密码认证");
 			authenticationManagerBuilder.authenticationProvider(daoAuthenticationProvider());
 		}
-		log.info("authenticationManager 配置完成");
 		return authenticationManagerBuilder.build();
 	}
 
@@ -200,7 +190,6 @@ public class CopilotWebSecurityAutoConfig {
 	@Bean
 	public PreAuthenticationFilter preAuthenticationFilter(AuthenticationManager authenticationManager) {
 		PreAuthenticationFilter authenticationFilter = new PreAuthenticationFilter();
-		authenticationFilter.setProperties(properties);
 		authenticationFilter.setAuthenticationManager(authenticationManager);
 		return authenticationFilter;
 	}

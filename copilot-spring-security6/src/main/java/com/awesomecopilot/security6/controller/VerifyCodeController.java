@@ -39,6 +39,7 @@ public class VerifyCodeController {
 	
 	@GetMapping(PIC_CODE_URL)
 	public Result verificationCode() {
+		log.info("verificationCode 开始");
 		//图片验证码唯一ID
 		String codeId = StringUtils.uniqueKey(12);
 		//生成随机字串
@@ -54,6 +55,7 @@ public class VerifyCodeController {
 		results.put(SecurityConstants.VERIFY_CODE_ID, codeId);
 		results.put(SecurityConstants.VERIFY_CODE, base64Encoded);
 		
+		log.info("verificationCode 结束, codeId={}, ttl={}分钟", codeId, picCode.getTtl());
 		return Results.success().data(results).build();
 	}
 	

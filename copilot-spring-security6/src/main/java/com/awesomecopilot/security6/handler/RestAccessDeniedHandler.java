@@ -31,13 +31,17 @@ public class RestAccessDeniedHandler implements AccessDeniedHandler{
 	@Override
 	public void handle(HttpServletRequest request, HttpServletResponse response,
 	                   AccessDeniedException accessDeniedException) throws IOException, ServletException {
+		log.info("handle 开始, uri={}", request.getRequestURI());
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		if (authentication != null) {
 			log.warn("User: " + authentication.getName()
 					+ " attempted to access the protected URL: "
 					+ request.getRequestURI());
+		} else {
+			log.info("handle >> 当前无认证信息, uri={}", request.getRequestURI());
 		}
 		
+		log.info("handle 结束, 返回ACCESS_DENIED, uri={}", request.getRequestURI());
 		Result result = Results.status(ErrorTypes.ACCESS_DENIED).build();
 		RestUtils.writeJson(response, result);
 	}

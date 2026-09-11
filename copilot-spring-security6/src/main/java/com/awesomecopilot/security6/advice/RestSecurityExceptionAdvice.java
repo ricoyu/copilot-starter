@@ -45,6 +45,7 @@ public class RestSecurityExceptionAdvice {
 	@ExceptionHandler(JwtTokenParseException.class)
 	@ResponseStatus(value = HttpStatus.OK)
 	public ResponseEntity<Object> handleJwtTokenParseException(JwtTokenParseException e) {
+		log.info("handleJwtTokenParseException 开始, exception={}", e.getClass().getSimpleName());
 		log.error("", e);
 		Result result = Results.status(TOKEN_INVALID).build();
 		return new ResponseEntity(result, HttpStatus.OK);
@@ -53,6 +54,7 @@ public class RestSecurityExceptionAdvice {
 	@ExceptionHandler(TokenExpiredException.class)
 	@ResponseStatus(value = HttpStatus.OK)
 	public ResponseEntity<Object> handleTokenExpiredException(TokenExpiredException e) {
+		log.info("handleTokenExpiredException 开始, exception={}", e.getClass().getSimpleName());
 		log.error("", e);
 		Result result = Results.status(TOKEN_EXPIRED).build();
 		return new ResponseEntity(result, HttpStatus.OK);
@@ -61,6 +63,7 @@ public class RestSecurityExceptionAdvice {
 	@ExceptionHandler(AccessDeniedException.class)
 	@ResponseStatus(value = HttpStatus.OK)
 	public ResponseEntity<Object> handleAccessDeniedException(AccessDeniedException e) {
+		log.info("handleAccessDeniedException 开始, exception={}", e.getClass().getSimpleName());
 		log.error("", e);
 		Result result = Results.status(ACCESS_DENIED).build();
 		return new ResponseEntity(result, HttpStatus.OK);

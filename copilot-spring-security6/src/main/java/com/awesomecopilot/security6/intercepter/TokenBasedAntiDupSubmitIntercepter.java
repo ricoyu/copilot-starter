@@ -58,6 +58,7 @@ public class TokenBasedAntiDupSubmitIntercepter implements HandlerInterceptor {
 			long timeout = antiDupSubmit.value();
 			String accessToken = getToken(request);
 			if (isBlank(accessToken)) {
+				log.info("preHandle >> token为空, 跳过防重复提交检查");
 				return false;
 			}
 			
@@ -73,7 +74,7 @@ public class TokenBasedAntiDupSubmitIntercepter implements HandlerInterceptor {
 				RestUtils.writeJson(response, result);
 				return false;
 			}
-
+			log.info("preHandle >> 防重复提交检查通过, method={}, timeout={}ms", fullMethodName, timeout);
 		}
 
 		return true;

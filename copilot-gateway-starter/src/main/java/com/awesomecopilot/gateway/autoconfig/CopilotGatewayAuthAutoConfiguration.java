@@ -1,9 +1,7 @@
 package com.awesomecopilot.gateway.autoconfig;
 
 import com.awesomecopilot.cloud.gateway.auth.filter.AuthenticationFilter;
-import com.awesomecopilot.cloud.gateway.auth.filter.JwtAuthenticationFilter;
 import com.awesomecopilot.cloud.gateway.auth.properties.CopilotGatewayProperties;
-import com.awesomecopilot.cloud.gateway.auth.filter.AuthorizationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -29,20 +27,9 @@ public class CopilotGatewayAuthAutoConfiguration {
 	private CopilotGatewayProperties gatewayAuthProperties;
 	
 	@Bean
-	@ConditionalOnProperty(name = "copilot.gateway.auth.jwt-token", havingValue = "true", matchIfMissing = false)
-	public JwtAuthenticationFilter jwtAuthenticationFilter() {
-		return new JwtAuthenticationFilter();
-	}
-	
-	@Bean
 	@ConditionalOnProperty(name = "copilot.gateway.auth.jwt-token", havingValue = "false", matchIfMissing = true)
 	public AuthenticationFilter authenticationFilter() {
 		return new AuthenticationFilter();
 	}
 	
-	@Bean
-	@ConditionalOnProperty(name = "copilot.gateway.auth.jwt-token", havingValue = "false", matchIfMissing = true)
-	public AuthorizationFilter authorizationFilter() {
-		return new AuthorizationFilter();
-	}
 }

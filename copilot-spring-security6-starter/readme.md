@@ -294,9 +294,48 @@ copilot:
         ttl: 5  # 5分钟过期
 ```
 
-获取验证码：`GET /pic-code?codeId=xxx`
+#### 验证码完整流程
 
-登录时传入验证码参数：`codeId` 和 `code`
+```
+前端 GET /pic-code
+  → VerifyCodeController:
+     1. 生成 12 位随机 codeId（StringUtils.uniqueKey(12)）
+     2. 生成 4 位随机验证码字符串（VerifyCodeUtils.generateVerifyCode(4)）
+     3. 绘制验证码图片（含干扰线、噪点、扭曲），Base64 编码（VerifyCodeUtils.outputImage）
+     4. Redis 写入 verifycode:{codeId} = 验证码文本，TTL 由 pic-code.ttl 配置（默认 5 分钟）
+  → 返回 { codeId: "xxx", code: "data:image/jpg;base64,..." }
+
+前端 POST /login?codeId=xxx&code=ABCD&username=rico&password=123
+  → VerifyCodeFilter（仅拦截登录请求）:
+     1. 万能验证码 "ssy666" 直接放行（开发调试用）
+     2. 从 Redis 取 verifycode:{codeId}，与前端提交的 code 参数比对（不区分大小写）
+     3. 不匹配或已过期 → 返回 AUTH_CODE_EXPIRED 错误
+     4. 匹配 → 放行，交给 UsernamePasswordAuthenticationFilter 处理登录
+```
+
+#### 核心组件
+
+| 组件 | 类 | 职责 |
+|------|------|------|
+| 验证码 Controller | `VerifyCodeController` | 处理 `GET /pic-code`，生成 codeId + 验证码图片，写入 Redis |
+| 验证码工具类 | `VerifyCodeUtils` | 生成随机字符串、绘制验证码图片（干扰线 + 噪点 + 扭曲效果） |
+| 验证码过滤器 | `VerifyCodeFilter` | 登录时校验前端提交的验证码是否正确，校验通过后交给后续过滤器 |
+
+以上三个组件仅在 `copilot.security6.feature.pic-code.enabled=true` 时注册。
+
+#### 返回示例
+
+```json
+{
+  "code": 0,
+  "data": {
+    "codeId": "a1b2c3d4e5f6",
+    "code": "data:image/jpg;base64,/9j/4AAQSkZJRgABAQAAAQ..."
+  }
+}
+```
+
+前端展示时将 `code` 字段作为 `<img>` 的 `src` 即可。登录时需要同时传入 `codeId` 和用户输入的验证码文本。
 
 ### 2. 防重复提交
 
