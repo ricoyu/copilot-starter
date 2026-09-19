@@ -33,7 +33,8 @@ public class CopilotCacheAutoConfiguration {
 	}
 
 	@Bean
-	public CopilotCacheEvictAspect cacheAspect() {
-		return new CopilotCacheEvictAspect();
+	public CopilotCacheEvictAspect cacheAspect(CopilotCacheProperties copilotCacheProperties) {
+		return new CopilotCacheEvictAspect(copilotCacheProperties.getEvictDelaySeconds(),
+			copilotCacheProperties.getEvictMaxPendingTasks());
 	}
 }

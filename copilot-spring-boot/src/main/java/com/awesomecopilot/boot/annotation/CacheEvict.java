@@ -35,4 +35,11 @@ public @interface CacheEvict {
 	 * 要清除的缓存key
 	 */
 	String[] keys();
+	
+	/**
+	 * 目标方法成功返回后, 延迟多少秒执行第二遍删除.
+	 * 默认-1表示使用全局配置 copilot.cache.evict-delay-seconds;
+	 * 主从复制延迟高的环境可以按方法单独调大这个值.
+	 */
+	long evictDelaySeconds() default -1;
 }
