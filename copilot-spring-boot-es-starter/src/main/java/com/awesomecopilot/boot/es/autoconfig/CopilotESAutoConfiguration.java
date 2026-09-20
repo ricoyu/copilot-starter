@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.core.env.Environment;
 
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
  * @author Rico Yu ricoyu520@gmail.com
  * @version 1.0
  */
-@Configuration
+@AutoConfiguration
 @ConditionalOnClass(ElasticUtils.class)
 @ConditionalOnProperty(prefix = "copilot.es", value = "enabled", havingValue = "true", matchIfMissing = false)
 @EnableConfigurationProperties({CopilotESProperties.class})

@@ -23,7 +23,8 @@ public class CopilotRocketMQ5xAutoConfig {
 	
 	@Bean
 	@ConditionalOnProperty(value = "copilot.rocket5x.idempotent.enabled", matchIfMissing = false)
-	public RocketMQ5xIdempotentAspect rocketMQ5xIdempotentAspect() {
-		return new RocketMQ5xIdempotentAspect();
+	public RocketMQ5xIdempotentAspect rocketMQ5xIdempotentAspect(CopilotRocketMQ5xProperties properties) {
+		CopilotRocketMQ5xProperties.Idempotent idempotent = properties.getIdempotent();
+		return new RocketMQ5xIdempotentAspect(idempotent.getTtlSeconds(), idempotent.isFailOpenOnRedisError());
 	}
 }

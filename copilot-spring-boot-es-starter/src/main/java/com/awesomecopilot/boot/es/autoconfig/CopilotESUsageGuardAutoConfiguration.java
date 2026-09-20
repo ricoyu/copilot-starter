@@ -33,14 +33,22 @@ public class CopilotESUsageGuardAutoConfiguration implements InitializingBean {
 	}
 	
 	/**
-	 * 检测到任何 copilot.es.* 使用项(除 enabled 键本身)但 enabled 不为 true 时记 warn.
-	 * 键枚举覆盖 yml 列表写法产生的 copilot.es.templates[0] 等带下标键与驼峰写法.
+	 * copilot.es.enabled 键在 Environment 中完全缺失、且存在任何 copilot.es.* 使用项时记 warn 点名.
+	 * <p>
+	 * 显式写了 enabled=false 视为主动关闭, 不提示: 多环境工程常在各 profile 配全套 copilot.es.* 再在
+	 * 生产用 enabled=false 关掉, 对这种明确决定每次启动再打一条 warn 属于固定噪声.
+	 * <p>
+	 * 键枚举按 propertySource 原始键名字面匹配, 覆盖 properties/yml 写法(含 yml 列表产生的
+	 * copilot.es.templates[0] 带下标键与驼峰写法); 以下两类使用项检测不到(只会漏提示, 不会误提示):
+	 * 环境变量形式(COPILOT_ES_TEMPLATES 等下划线大写键名)、非 EnumerablePropertySource 的自定义属性源.
 	 */
 	static void warnIfUsageWithoutEnable(Environment environment) {
 		if (environment == null) {
 			return;
 		}
-		if ("true".equalsIgnoreCase(environment.getProperty("copilot.es.enabled"))) {
+		//enabled 键显式存在(任意值)=用户已对开关做出决定; 值能解析为 true 的更无需提示
+		if (Boolean.parseBoolean(environment.getProperty("copilot.es.enabled", "false"))
+			|| environment.containsProperty("copilot.es.enabled")) {
 			return;
 		}
 		if (!(environment instanceof ConfigurableEnvironment configurable)) {

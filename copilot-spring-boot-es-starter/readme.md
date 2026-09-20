@@ -105,3 +105,11 @@ copilot:
 本 Starter 依赖以下模块：
 - `elasticsearch-rest-high-level-client`：ES REST 客户端
 - `copilot-search`：搜索核心组件
+
+## 升级注意事项（21.0.8 起）
+
+- **ES 功能默认关闭**：`copilot.es.enabled` 缺省不装配自动配置（不建 transport 连接、不装载索引模板）。
+  从旧版本升级且在使用 ES 的应用必须显式配置 `copilot.es.enabled=true` 才恢复原行为。
+- **连带影响**：条件不满足时整个配置类不装配，`CopilotESProperties` bean 也不再注册——直接注入
+  该类的代码会因找不到 bean 启动失败，升级时一并检查。
+- 配了其他 `copilot.es.*` 键但忘开开关时，启动日志会点名提示（显式配 `enabled=false` 不提示）。

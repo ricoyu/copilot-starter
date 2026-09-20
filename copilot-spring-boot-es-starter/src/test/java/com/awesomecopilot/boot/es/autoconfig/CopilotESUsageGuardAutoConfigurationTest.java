@@ -58,6 +58,74 @@ class CopilotESUsageGuardAutoConfigurationTest {
 	}
 	
 	@Test
+	void explicitFalseEnabledMeansIntentionalOptOutAndStaysSilent() {
+		//多环境工程常见: dev 配全套 copilot.es.*, prod 用 enabled:false 主动关.
+		//显式写了 enabled=false 是明确决定, 每次启动再 warn 就是固定噪声——只有键完全缺失且存在使用项才提示
+		MockEnvironment env = new MockEnvironment();
+		env.setProperty("copilot.es.enabled", "false");
+		env.setProperty("copilot.es.templates", "event_template.json");
+		
+		assertThat(runGuardAndCapture(env)).isEmpty();
+	}
+	
+	@Test
+	void warnNamesTheDetectedUsageKey() {
+		MockEnvironment env = new MockEnvironment();
+		env.setProperty("copilot.es.init", "true");
+		
+		List<ILoggingEvent> warns = runGuardAndCapture(env).stream()
+			.filter(e -> e.getLevel() == Level.WARN)
+			.collect(Collectors.toList());
+		
+		//提示的核心价值是报出用户实际写了哪个键(建议4①): 消息必须同时含命中键名与补救键名
+		assertThat(warns).hasSize(1);
+		assertThat(warns.get(0).getFormattedMessage())
+			.contains("copilot.es.init")
+			.contains("copilot.es.enabled");
+	}
+	
+	@Test
+	void guardRunsAtContextStartupWiring() {
+		//建议3: 证明 afterPropertiesSet 接线有效——只调静态方法的两组测试删掉钩子调用依然全绿
+		ListAppender<ILoggingEvent> appender = new ListAppender<>();
+		appender.start();
+		GUARD_LOG.addAppender(appender);
+		Level previous = GUARD_LOG.getLevel();
+		GUARD_LOG.setLevel(Level.DEBUG);
+		try {
+			new ApplicationContextRunner()
+				.withPropertyValues("copilot.es.templates[0]=event_template.json")
+				.withConfiguration(AutoConfigurations.of(CopilotESUsageGuardAutoConfiguration.class))
+				.run(context -> assertThat(context).hasSingleBean(CopilotESUsageGuardAutoConfiguration.class));
+		} finally {
+			GUARD_LOG.detachAppender(appender);
+			GUARD_LOG.setLevel(previous);
+		}
+		
+		assertThat(appender.list.stream()
+			.filter(e -> e.getLevel() == Level.WARN)
+			.map(ILoggingEvent::getFormattedMessage)
+			.collect(Collectors.toList()))
+			.anyMatch(s -> s.contains("copilot.es.templates[0]"));
+	}
+	
+	@Test
+	void autoConfigurationImportsResolveToRealClasses() throws Exception {
+		//建议4②: imports 文件是幽灵注册防线, 测试用 AutoConfigurations.of() 直列类名会绕过它
+		var resource = getClass().getClassLoader()
+			.getResource("META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports");
+		assertThat(resource).isNotNull();
+		List<String> lines = java.nio.file.Files.readAllLines(java.nio.file.Path.of(resource.toURI())).stream()
+			.map(String::trim).filter(s -> !s.isEmpty()).toList();
+		assertThat(lines).contains(
+			"com.awesomecopilot.boot.es.autoconfig.CopilotESUsageGuardAutoConfiguration",
+			"com.awesomecopilot.boot.es.autoconfig.CopilotESAutoConfiguration");
+		for (String line : lines) {
+			Class.forName(line);   //注册了不存在的类会让应用启动阶段抛 ClassNotFound, 这里在测试期先暴露
+		}
+	}
+	
+	@Test
 	void enabledTrueGetsNoWarn() {
 		MockEnvironment env = new MockEnvironment();
 		env.setProperty("copilot.es.enabled", "true");
