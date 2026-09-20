@@ -36,13 +36,16 @@
             <groupId>com.awesomecopilot</groupId>
             <artifactId>copilot-json</artifactId>
         </dependency>
+        <!--本模块源码直接使用 commons-lang3 与 aspectj 注解, 显式声明(版本由 Boot 父 pom 管理),
+            不再依赖 commons-lang/commons-spring 的传递供给;
+            原 copilot-codec/copilot-networking 两个依赖在本模块源码 import 计数为 0, 已删除-->
         <dependency>
-            <groupId>com.awesomecopilot</groupId>
-            <artifactId>copilot-codec</artifactId>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.awesomecopilot</groupId>
-            <artifactId>copilot-networking</artifactId>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

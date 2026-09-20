@@ -34,6 +34,11 @@
             <groupId>com.awesomecopilot</groupId>
             <artifactId>copilot-web</artifactId>
         </dependency>
+        <!--ApiSignFilter 直接使用 HashUtils, 显式声明 copilot-codec(此前经 copilot-spring-boot 传递获得)-->
+        <dependency>
+            <groupId>com.awesomecopilot</groupId>
+            <artifactId>copilot-codec</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.apache.tomcat.embed</groupId>
             <artifactId>tomcat-embed-core</artifactId>

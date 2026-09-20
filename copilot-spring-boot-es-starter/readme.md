@@ -36,6 +36,7 @@ elastic.rest.hosts=192.168.100.101:9200,192.168.100.102:9200,192.168.100.103:920
 ```yaml
 copilot:
   es:
+    enabled: true                       # 总开关: 必须显式 true, ES 自动配置才装配(否则不建连接); 缺省不配=不启用, 忘开时启动日志会点名提示
     init: true                          # 是否初始化模板
     templates:
       - netlog_template.json            # 模板文件路径
@@ -95,7 +96,8 @@ copilot:
 
 | 配置项 | 类型 | 默认值 | 说明 |
 |--------|------|--------|------|
-| `copilot.es.init` | boolean | false | 是否初始化索引模板 |
+| `copilot.es.enabled` | boolean | false | 总开关，必须显式配 true 才装配 ES 自动配置（连接/索引模板）；配了其他 copilot.es.* 但忘开本开关时启动日志点名提示 |
+| `copilot.es.init` | boolean | true | 是否启动时初始化索引模板 |
 | `copilot.es.templates` | List | [] | 模板文件列表 |
 
 ## 依赖说明

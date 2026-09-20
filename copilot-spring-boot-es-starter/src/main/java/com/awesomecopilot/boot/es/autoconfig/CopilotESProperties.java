@@ -18,6 +18,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class CopilotESProperties {
 	
 	/**
+	 * 总开关: 必须显式配 true 才装配 ES 自动配置(连接/索引模板); 缺省不配时不建任何连接.
+	 * 配了其他 copilot.es.* 使用项但忘了开本开关时, 启动日志会收到点名提示
+	 * (CopilotESUsageGuardAutoConfiguration). 实际判定由 @ConditionalOnProperty 读 Environment 完成,
+	 * 本字段仅为 IDE 生成配置提示
+	 */
+	private boolean enabled = false;
+	
+	/**
 	 * 是否启动时初始化Elasticsearch客户端连接
 	 */
 	private boolean init = true;

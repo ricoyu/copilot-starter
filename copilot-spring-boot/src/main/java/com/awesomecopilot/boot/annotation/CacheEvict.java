@@ -39,6 +39,7 @@ public @interface CacheEvict {
 	/**
 	 * 目标方法成功返回后, 延迟多少秒执行第二遍删除.
 	 * 默认-1表示使用全局配置 copilot.cache.evict-delay-seconds;
+	 * 填 0 或负数同样按全局默认处理;
 	 * 主从复制延迟高的环境可以按方法单独调大这个值.
 	 */
 	long evictDelaySeconds() default -1;

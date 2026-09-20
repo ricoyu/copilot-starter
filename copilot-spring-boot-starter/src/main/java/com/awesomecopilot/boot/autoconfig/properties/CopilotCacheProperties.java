@@ -21,12 +21,14 @@ public class CopilotCacheProperties {
 	private boolean enabled = true;
 	
 	/**
-	 * @CacheEvict 第二删的全局默认延迟秒数; 注解属性 evictDelaySeconds 可按方法覆盖
+	 * @CacheEvict 第二删的全局默认延迟秒数; 注解属性 evictDelaySeconds 可按方法覆盖;
+	 * 配置为 0 或负数按 1 秒处理
 	 */
 	private long evictDelaySeconds = 1;
 	
 	/**
-	 * @CacheEvict 第二删允许排队等待的最大任务数, Redis 变慢时超出的第二删被跳过并记录 error
+	 * @CacheEvict 第二删允许排队等待的最大任务数, Redis 变慢时超出的第二删被跳过并记录 error;
+	 * 配置为 0 或负数按 1000 处理
 	 */
 	private int evictMaxPendingTasks = 1000;
 	

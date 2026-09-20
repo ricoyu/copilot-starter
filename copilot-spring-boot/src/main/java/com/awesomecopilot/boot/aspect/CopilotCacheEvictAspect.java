@@ -14,12 +14,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.context.expression.MapAccessor;
 import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.core.DefaultParameterNameDiscoverer;
+import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.core.annotation.Order;
 import org.springframework.expression.Expression;
 import org.springframework.expression.common.TemplateParserContext;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -28,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -77,6 +81,9 @@ public class CopilotCacheEvictAspect {
 	
 	private static final SpelExpressionParser SPEL_PARSER = new SpelExpressionParser();
 	
+	/** 从字节码/反射信息发现方法参数名(-parameters 编译时可用) */
+	private static final ParameterNameDiscoverer PARAM_NAME_DISCOVERER = new DefaultParameterNameDiscoverer();
+	
 	public CopilotCacheEvictAspect() {
 		this(1L, 1000);
 	}
@@ -98,7 +105,7 @@ public class CopilotCacheEvictAspect {
 		}
 		List<String> realKeys = resolveKeysQuietly(joinPoint, cacheEvict.keys(), "第一次删除缓存");
 		if (!realKeys.isEmpty()) {
-			evictKeys(realKeys);
+			evictKeys("第一次删除缓存", realKeys);
 		}
 	}
 	
@@ -112,7 +119,7 @@ public class CopilotCacheEvictAspect {
 	}
 	
 	/**
-	 * 安排第二遍删除. 返回 false 表示因排队名额用完被跳过.
+	 * 安排第二遍删除. 返回 false 表示被跳过(排队名额用完, 或调度器已停止).
 	 * key 在主线程提前解析, 避免异步线程拿不到调用上下文.
 	 */
 	boolean tryScheduleSecondDelete(JoinPoint joinPoint, CacheEvict cacheEvict) {
@@ -131,13 +138,25 @@ public class CopilotCacheEvictAspect {
 			return true;
 		}
 		long delay = secondDeleteDelaySeconds(cacheEvict, evictDelaySeconds);
-		scheduler.schedule(() -> {
-			try {
-				evictKeys(realKeys);
-			} finally {
-				pendingSlots.release();
-			}
-		}, delay, TimeUnit.SECONDS);
+		try {
+			scheduler.schedule(() -> {
+				try {
+					evictKeys("延迟第二删", realKeys);
+				} finally {
+					pendingSlots.release();
+				}
+			}, delay, TimeUnit.SECONDS);
+		} catch (RejectedExecutionException e) {
+			//停机窗口(@PreDestroy 已执行但仍有在途请求走到 @AfterReturning)或手工调用 shutdown 后,
+			//schedule 必然拒绝任务. 此处归还名额(任务从未入队, 任务体的 finally 不会运行),
+			//且不向上抛——@CacheEvict 的契约是删除失败不影响业务方法本身
+			pendingSlots.release();
+			log.error("缓存第二删被跳过: 调度器已停止, 方法 {}#{}, keys={}",
+				joinPoint.getSignature().getDeclaringTypeName(),
+				joinPoint.getSignature().getName(),
+				String.join(",", cacheEvict.keys()));
+			return false;
+		}
 		return true;
 	}
 	
@@ -160,10 +179,10 @@ public class CopilotCacheEvictAspect {
 	}
 	
 	/** 实际执行删除; 单键失败只记日志, 不影响业务主流程(注解契约). 测试通过覆写本方法隔离 Redis */
-	void evictKeys(List<String> keys) {
+	void evictKeys(String stage, List<String> keys) {
 		String time = format(new Date());
 		for (String key : keys) {
-			log.info("{} 删除缓存: {}", time, key);
+			log.info("{} {}: {}", time, stage, key);
 			try {
 				JedisUtils.del(key);
 			} catch (Exception e) {
@@ -195,7 +214,22 @@ public class CopilotCacheEvictAspect {
 	private List<String> resolveKeysQuietly(JoinPoint joinPoint, String[] originKeys, String stage) {
 		try {
 			MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-			return resolveEvictKeys(signature.getMethod(), signature.getParameterNames(), joinPoint.getArgs(), originKeys);
+			Method method = signature.getMethod();
+			String[] paramNames = signature.getParameterNames();
+			// JDK 动态代理下 signature.getMethod() 是接口方法, 其参数名取自接口——接口(api 包)不带
+			// -parameters 编译时拿到的是 arg0/arg1, 模板里的 #dto 之类变量解析不出来.
+			// 与注解查找一致地换算到实现类的具体方法, 用 Spring 的参数名发现器再取一次
+			if (joinPoint.getTarget() != null) {
+				Method specific = AopUtils.getMostSpecificMethod(method, joinPoint.getTarget().getClass());
+				if (!specific.equals(method)) {
+					String[] specificNames = PARAM_NAME_DISCOVERER.getParameterNames(specific);
+					if (specificNames != null && specificNames.length > 0 && !specificNames[0].startsWith("arg")) {
+						method = specific;
+						paramNames = specificNames;
+					}
+				}
+			}
+			return resolveEvictKeys(method, paramNames, joinPoint.getArgs(), originKeys);
 		} catch (Exception e) {
 			log.error("{}: key 解析整体失败, 本次删除跳过, 模板={}", stage, String.join(",", originKeys), e);
 			return Collections.emptyList();

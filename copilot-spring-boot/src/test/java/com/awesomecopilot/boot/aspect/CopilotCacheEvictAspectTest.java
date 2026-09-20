@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -65,7 +66,8 @@ class CopilotCacheEvictAspectTest {
 	 * 记录本应删除的 key、不真正连 Redis 的测试用切面
 	 */
 	static class RecordingAspect extends CopilotCacheEvictAspect {
-		final List<String> deleted = new ArrayList<>();
+		final List<String> deleted = Collections.synchronizedList(new ArrayList<>());
+		final List<String> stages = Collections.synchronizedList(new ArrayList<>());
 		final int maxPending;
 		final long defaultDelay;
 		
@@ -78,9 +80,22 @@ class CopilotCacheEvictAspectTest {
 		}
 		
 		@Override
-		void evictKeys(List<String> keys) {
+		void evictKeys(String stage, List<String> keys) {
+			stages.add(stage);
 			deleted.addAll(keys);
 		}
+	}
+	
+	private static JoinPoint mockUpdateJoinPoint() throws Exception {
+		MethodSignature signature = mock(MethodSignature.class);
+		when(signature.getMethod()).thenReturn(
+			OrderServiceImpl.class.getDeclaredMethod("update", String.class, OrderDto.class));
+		when(signature.getParameterNames()).thenReturn(new String[]{"orderNo", "dto"});
+		JoinPoint joinPoint = mock(JoinPoint.class);
+		when(joinPoint.getSignature()).thenReturn(signature);
+		when(joinPoint.getTarget()).thenReturn(new OrderServiceImpl());
+		when(joinPoint.getArgs()).thenReturn(new Object[]{"A1", new OrderDto(42L)});
+		return joinPoint;
 	}
 	
 	private static CacheEvict annotationOf(Class<?> clazz, String methodName, Class<?>... types) throws Exception {
@@ -242,6 +257,79 @@ class CopilotCacheEvictAspectTest {
 		assertThat(first).isTrue();
 		assertThat(second).isFalse();
 		assertThat(assertThatMessages(appender)).anyMatch(s -> s.contains("排队任务已达上限"));
+	}
+	
+	@Test
+	void schedulingAfterShutdownDoesNotThrowAndDoesNotLeakSlot() throws Exception {
+		//停机窗口(或手工调用 shutdown 后)再触发第二删: schedule 抛 RejectedExecutionException,
+		//修复前 ①异常穿过 @AfterReturning 通知传给业务调用方(违反 @CacheEvict "删除失败不抛异常"契约)
+		//②已占用的排队名额不归还(归还代码在从未入队的任务体 finally 里), 泄漏满后所有第二删误报"已达上限"
+		RecordingAspect aspect = new RecordingAspect(1L, 1);
+		CacheEvict ann = annotationOf(OrderServiceImpl.class, "zeroArg");
+		JoinPoint joinPoint = mockUpdateJoinPoint();
+		
+		aspect.shutdown();
+		
+		assertThatCode(() -> aspect.tryScheduleSecondDelete(joinPoint, ann)).doesNotThrowAnyException();
+		//名额没有被泄漏: 下一次调度(同样在 shutdown 后)仍走到"调度器已停止"分支而不是"排队已达上限"
+		assertThat(aspect.tryScheduleSecondDelete(joinPoint, ann)).isFalse();
+	}
+	
+	@Test
+	void secondDeleteRunsAfterDelayWithKeysParsedOnMainThread() throws Throwable {
+		//第二删核心语义: 延迟到期后真的执行删除, 删的是主线程提前解析好的 key
+		RecordingAspect aspect = new RecordingAspect(1L, 10);
+		JoinPoint joinPoint = mockUpdateJoinPoint();
+		CacheEvict ann = CopilotCacheEvictAspect.resolveCacheEvict(joinPoint);
+		
+		assertThat(aspect.tryScheduleSecondDelete(joinPoint, ann)).isTrue();
+		//调度立刻返回, 此刻(默认延迟1秒内)不应已执行
+		assertThat(aspect.deleted).isEmpty();
+		
+		long deadline = System.currentTimeMillis() + 5_000;
+		while (aspect.deleted.isEmpty() && System.currentTimeMillis() < deadline) {
+			Thread.sleep(50);
+		}
+		assertThat(aspect.deleted).containsExactly("category_brands_42", "plain_key");
+		assertThat(aspect.stages).containsExactly("延迟第二删");
+	}
+	
+	@Test
+	void shutdownDrainsQueuedTasksWithinGracePeriod() throws Throwable {
+		//停机收尾: 队列里已到期的任务应在 awaitTermination 宽限期内执行完, 而不是被丢弃
+		RecordingAspect aspect = new RecordingAspect(1L, 10);
+		JoinPoint joinPoint = mockUpdateJoinPoint();
+		CacheEvict ann = CopilotCacheEvictAspect.resolveCacheEvict(joinPoint);
+		aspect.tryScheduleSecondDelete(joinPoint, ann);
+		
+		//等到延迟(1秒)到期任务进入执行, 或最多等 2 秒后 shutdown 让其靠收尾窗口执行
+		shutdownAndAssertDrained(aspect);
+	}
+	
+	private void shutdownAndAssertDrained(RecordingAspect aspect) throws InterruptedException {
+		aspect.shutdown();
+		//shutdown 内部 awaitTermination(5s) 同步等待, 返回时队列任务应已执行完
+		assertThat(aspect.deleted).containsExactly("category_brands_42", "plain_key");
+	}
+	
+	@Test
+	void interfaceArgStyleParamNamesAreReplacedByImplementationMethodNames() throws Throwable {
+		// JDK 代理 + 接口(api 包)不带 -parameters 编译: signature.getMethod() 是接口方法,
+		// getParameterNames() 给的是 arg0/arg1; 修复前模板 #dto.brandId 解析不出来被跳过,
+		// 只删掉固定 key; 修复后应换算实现类方法拿到真实参数名, 模板 key 正常解析
+		Method ifaceMethod = OrderService.class.getDeclaredMethod("update", String.class, OrderDto.class);
+		MethodSignature signature = mock(MethodSignature.class);
+		when(signature.getMethod()).thenReturn(ifaceMethod);
+		when(signature.getParameterNames()).thenReturn(new String[]{"arg0", "arg1"});
+		JoinPoint joinPoint = mock(JoinPoint.class);
+		when(joinPoint.getSignature()).thenReturn(signature);
+		when(joinPoint.getTarget()).thenReturn(new OrderServiceImpl());
+		when(joinPoint.getArgs()).thenReturn(new Object[]{"A1", new OrderDto(42L)});
+		
+		RecordingAspect aspect = new RecordingAspect();
+		aspect.before(joinPoint);
+		
+		assertThat(aspect.deleted).containsExactly("category_brands_42", "plain_key");
 	}
 	
 	private static ListAppender<ILoggingEvent> attachAppender() {
