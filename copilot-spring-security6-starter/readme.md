@@ -164,7 +164,7 @@ copilot:
 | `copilot.security6.user-pass-login.logout-url` | String | /logout | 登出URL |
 | `copilot.security6.user-pass-login.role-prefix` | String | ROLE_ | 角色前缀 |
 | `copilot.security6.feature.anti-duplicate-submit` | boolean | true | 是否启用防重复提交 |
-| `copilot.security6.feature.rate-limit` | boolean | true | 是否启用限流 |
+| `copilot.security6.feature.rate-limit` | boolean | true | 属性类里有该字段，但当前源码未见任何消费点，配置暂无实际效果（限流能力在 web 模块 @RateLimit） |
 | `copilot.security6.feature.pic-code.enabled` | boolean | false | 是否启用图片验证码 |
 | `copilot.security6.feature.pic-code.ttl` | long | 5 | 验证码过期时间（分钟） |
 

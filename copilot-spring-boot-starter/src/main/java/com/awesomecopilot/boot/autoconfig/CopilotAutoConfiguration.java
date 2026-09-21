@@ -73,7 +73,7 @@ public class CopilotAutoConfiguration {
 	 * <p>
 	 * 与 web-starter 的 CopilotJacksonObjectMapperPostProcessor 分工: 那边在 ObjectMapper bean
 	 * 初始化阶段做装饰(让 MVC converter 尽早拿到增强 mapper), 本处理器在全部单例就绪后补做
-	 * JacksonUtils 接线与 copilot.jackson.* 配置; 两边共用 ObjectMapperDecorationTracker,
+	 * 把 mapper 交给 JacksonUtils 与 copilot.jackson.* 配置; 两边共用 ObjectMapperDecorationTracker,
 	 * 装饰不会重复. 此前本类没有任何注册点, copilot.jackson.* 在非 Web 应用整块不生效(评审报告 P1-1).
 	 */
 	@Bean

@@ -53,7 +53,7 @@ public class ObjectMapperBeanPostProcessor implements SmartInitializingSingleton
 		ObjectMapper objectMapper = objectMapperProvider.getIfAvailable();
 		if (objectMapper == null) {
 			//容器里没有 ObjectMapper bean(应用 exclude 了 Jackson 自动配置之类), JacksonUtils 用自身默认实例
-			log.info("容器中没有 ObjectMapper bean, 跳过 JacksonUtils 接线与 copilot.jackson.* 配置");
+			log.info("容器中没有 ObjectMapper bean, 跳过 JacksonUtils 替换与 copilot.jackson.* 配置");
 			return;
 		}
 		log.info("初始化JacksonUtils......");

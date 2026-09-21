@@ -41,7 +41,8 @@ Spring Boot Web 应用 Starter，提供 Web 开发常用功能自动配置。
 copilot:
   # MVC 配置
   mvc:
-    cors-enabled: false                    # CORS 跨域，默认 false
+    cors:
+      enabled: false                       # CORS 跨域，默认 false（键是嵌套对象 copilot.mvc.cors.*）
     rest-exception-advice-enabled: true    # 全局异常处理，默认 true
     api-sign:
       enabled: false                       # 接口签名，默认 false
@@ -121,9 +122,9 @@ copilot:
   websocket:
     enabled: true
     path-prefix: /ws/push/**
-  cache:
-    enabled: true
 ```
+
+WebSocket 的跨节点分发直接使用 copilot-cache 的 `JedisUtils`（redis.properties 配好即可），不要求 `copilot.cache.enabled`。
 
 通过 HTTP 接口触发推送：
 ```
@@ -161,10 +162,9 @@ public Result submit() {
 }
 ```
 
-客户端先请求 `/idempotent-token` 获取 token，然后设置请求头：
-```
-Idempotent-Token: <token>
-```
+拦截器（IdempotentIntercepter）随本 starter 无条件注册：方法打了 `@Idempotent` 就必须携带请求头 `Idempotent-Token`，否则直接拦截（返回 false，不执行目标方法）。
+
+**注意：**发放 token 的 `/idempotent-token` 端点（`IdempotentTokenController`）的 `@Bean` 注册目前在 `CopilotMvcConfiguration` 里是注释掉的，应用自己的包又扫描不到它——需要该端点时应用要自行 `@Bean` 注册 `IdempotentTokenController`（其 TTL 取 `copilot.mvc.idemtotent-token-ttl`，默认 3600 秒；键名拼写 idemtotent 同源码）。
 
 ### 6. 多租户支持
 
@@ -271,7 +271,17 @@ copilot:
 
 访问 `http://localhost:8080/tomcat/threadpool` 查看线程池状态。
 
-### 12. RequestBody 可重复读取
+### 12. 接口限流 @RateLimit
+
+```java
+@RateLimit(limit = 100, window = 1000)   // 默认值
+@GetMapping("/hot")
+public Result hot() { ... }
+```
+
+拦截器（RateLimitIntercepter）随本 starter 无条件注册：按 `rate_limit:{控制器路径}:{方法路径}` 为键计数，超过 limit 时若有自定义 `RateLimitHandler`（需公共无参构造）交给它处理，否则默认放行逻辑以源码为准。`@RateLimit` 未标注的方法不受影响。
+
+### 13. RequestBody 可重复读取
 
 ```yaml
 copilot:
@@ -285,7 +295,7 @@ copilot:
 
 | 配置项 | 类型 | 默认值 | 说明 |
 |--------|------|--------|------|
-| `copilot.mvc.cors-enabled` | boolean | false | 是否启用 CORS |
+| `copilot.mvc.cors.enabled` | boolean | false | 是否启用 CORS（对全部路径 /**，allowedOrigins 走 allowedOriginPatterns） |
 | `copilot.mvc.rest-exception-advice-enabled` | boolean | true | 是否启用全局异常处理 |
 | `copilot.mvc.api-sign.enabled` | boolean | false | 是否启用接口签名 |
 | `copilot.filter.repeated-read` | boolean | false | RequestBody 可重复读取 |
@@ -296,7 +306,14 @@ copilot:
 | `copilot.websocket.path-prefix` | String | /ws/push/** | WebSocket 路径前缀 |
 | `copilot.locale.enabled` | boolean | false | 国际化支持 |
 | `copilot.idempotent.enabled` | boolean | true | 接口幂等性 |
-| `copilot.cache.enabled` | boolean | false | 缓存功能 |
+| `copilot.cache.enabled` | boolean | false | 缓存功能（基础 starter 的双删/订阅装配开关） |
+| `copilot.mvc.idemtotent-token-ttl` | int | 3600 | 幂等 token 的存活秒数（拼写同源码 IdemtotentProperties） |
+
+## 其他自动装配（无独立开关）
+
+- **Knife4j 静态资源**：应用配了 `spring.web.resources.add-mappings=false`（Boot 官方文档推荐的纯 API 应用配置）时，`CopilotSwaggerResourceAutoConfiguration` 会补回 `/webjars/**` → `classpath:/META-INF/resources/webjars/` 的资源映射（条件是 classpath 有 springdoc），否则 knife4j 页面样式丢失。
+- **全局异常处理**：`RestExceptionAdvice` 默认注册（`copilot.mvc.rest-exception-advice-enabled` 配 false 可关）；`GlobalBindingAdvice` 始终注册。
+- **ThreadLocal 清理**：`ServletRequestListener` 请求结束清理 ThreadLocal（classpath 有该类即注册）。
 
 ## 依赖说明
 

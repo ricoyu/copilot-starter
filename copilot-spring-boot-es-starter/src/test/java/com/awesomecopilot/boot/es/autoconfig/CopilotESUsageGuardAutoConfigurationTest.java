@@ -86,7 +86,7 @@ class CopilotESUsageGuardAutoConfigurationTest {
 	
 	@Test
 	void guardRunsAtContextStartupWiring() {
-		//建议3: 证明 afterPropertiesSet 接线有效——只调静态方法的两组测试删掉钩子调用依然全绿
+		//建议3: 证明容器启动时真的会调用 afterPropertiesSet——只调静态方法的两组测试删掉钩子调用依然全绿
 		ListAppender<ILoggingEvent> appender = new ListAppender<>();
 		appender.start();
 		GUARD_LOG.addAppender(appender);

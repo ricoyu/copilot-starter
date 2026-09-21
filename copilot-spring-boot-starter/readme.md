@@ -13,6 +13,7 @@ Spring Boot 基础 Starter，提供常用功能自动配置。
 - ✅ Redis 缓存延迟双删
 - ✅ 时区自动设置
 - ✅ 异步事务支持
+- ✅ 把容器里的 ObjectMapper 交给静态的 JacksonUtils 使用（并应用 copilot.jackson.* 增强配置）
 
 ## 快速开始
 
@@ -76,7 +77,7 @@ copilot:
 
 ```properties
 redis.host=192.168.100.13
-redis.password=deepdata$
+redis.password=your-redis-password
 ```
 
 ### 2. @PostInitialize - 事务就绪后执行
@@ -105,12 +106,15 @@ CopilotFilterProperties properties = ApplicationContextHolder.getBean(CopilotFil
 
 自动配置 `LocalTimeConverter`，支持 LocalTime 类型的自动转换。
 
-### 5. 循环依赖（需自行开启，21.0.8 起变更）
+### 5. 循环依赖（默认允许，21.0.8 起改为显式补位）
 
-本 starter 曾打包一份 `application.properties` 默认为所有应用打开
-`spring.main.allow-circular-references=true`，该文件已删除：
-- 升级后若应用确实存在循环依赖，会在启动时收到 BeanCreationException 循环引用报错——这是 Spring Boot 2.6+ 的默认保护（暴露设计问题），优先建议解开循环引用；
-- 确需放开时，在应用自己的 application.yml/properties 里显式配置 `spring.main.allow-circular-references: true`（此前它可能来自本 jar 内那份文件，且是否生效取决于 classpath 顺序）。
+Spring Boot 2.6+ 默认禁止循环依赖，而上游 commons-spring 的 `TransactionEvents` 在
+`@PostConstruct` 里通过 `getBean` 获取自身，离了这个开关应用无法启动。因此本 starter 用
+`CopilotDefaultsEnvironmentPostProcessor` 在应用没有配置该键时补上
+`spring.main.allow-circular-references=true`（以最低优先级注入）：
+- 不配置：默认允许循环依赖，与旧版本行为一致；
+- 应用自己配置了该键（无论 true/false）：必定以应用配置为准；
+- 旧版本打包在 jar 根目录的 `application.properties` 已删除——它是否生效取决于 classpath 顺序，且会占掉宿主应用同名文件的位置，现在改为显式补位后这两点都不复存在。
 
 ### 6. 逻辑删除自动条件
 
@@ -124,7 +128,7 @@ spring:
     properties:
       hibernate:
         session_factory:
-          statement_inspector: com.awesomecopilot.cloud.product.config.DeletedTenantIdConditionInterceptor
+          statement_inspector: com.awesomecopilot.orm.interceptor.DeletedTenantIdConditionInterceptor
 ```
 
 **启用逻辑删除：**
@@ -164,9 +168,12 @@ copilot:
 | `copilot.timezone` | String | Asia/Shanghai | 应用时区 |
 | `copilot.async-transaction` | boolean | true | 是否开启异步事务支持（camelCase 写法 `copilot.asyncTransaction` 同样识别） |
 | `copilot.enable-post-initialize` | boolean | true | 是否开启 @PostInitialize 支持（camelCase 写法同样识别） |
-| `copilot.cache.enabled` | boolean | false | 是否开启缓存功能 |
+| `copilot.cache.enabled` | boolean | true | 是否开启缓存功能（classpath 有 JedisUtils 时生效；关闭后 @RedisListener/@CacheEvict 双删/订阅处理全部不装配） |
 | `copilot.orm.logical-delete.enabled` | boolean | false | 是否开启逻辑删除 |
 | `copilot.orm.logical-delete.field` | String | deleted | 逻辑删除字段名 |
+| `copilot.jackson.field-name-quote` | boolean | true | false 时输出 JSON 字段名不带双引号（同时允许解析不带引号的字段名；注意转义设置位于 JsonFactory 层，同源多个 mapper 会共同受影响） |
+| `copilot.jackson.serializers` | List | [] | 自定义序列化器，条目为 {type, serializer}，一次性注册进同一个 SimpleModule；实例化失败启动报错 |
+| `copilot.jackson.deserializers` | List | [] | 自定义反序列化器，条目为 {type, deserializer}，同上 |
 
 ## 依赖说明
 

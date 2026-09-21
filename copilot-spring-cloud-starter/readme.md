@@ -8,8 +8,11 @@ Spring Cloud 微服务 Starter，提供微服务开发常用功能自动配置�
 - ✅ Sentinel 异常处理
 - ✅ Sentinel 授权规则
 - ✅ 多租户支持（Feign 传递 Tenant-Id）
-- ✅ Feign 拦截器自动配置
+- ✅ Feign 自动透传 Authorization 请求头
+- ✅ 过滤器链未处理异常的统一 500 JSON 响应（ExceptionFilter）
 - ✅ 金丝雀发布负载均衡（开发者流量隔离）
+
+条件说明：`CopilotSpringCloudAutoConfiguration` 整体要求 Servlet 应用（`@ConditionalOnWebApplication(SERVLET)`）。
 
 ## 快速开始
 
@@ -53,13 +56,9 @@ copilot:
 
 ### 1. 接口幂等性 @Idempotent
 
-**被调用方配置：**
+**调用方（Feign 客户端侧）** 开关是 `copilot.idempotent.enabled`（默认关），打开后 `IdempotentInterceptor` 给所有 Feign 请求加 `Idempotent: <UUID>` 请求头（超时重试携带同一值）。
 
-```yaml
-copilot:
-  idempotent:
-    enabled: true
-```
+**被调用方（服务端切面侧）** 开关的键是 `copilot.idemtotent.enabled`——注意拼写：源码里就是这个 `idemtotent`（IdempotentAspect 的 `@ConditionalOnProperty` 原样如此），写成正确的 `idempotent` 反而切面不装配。属性类 `IdemtotentProperties` 的前缀则是 `copilot.idempotent`，两个键管的东西不同，都要按需配置。
 
 在需要幂等性控制的方法上添加注解：
 
@@ -140,7 +139,12 @@ copilot:
       mandatory: true  # 强制要求携带 Tenant-Id
 ```
 
-### 5. 金丝雀发布负载均衡
+### 5. Authorization 请求头补写与异常统一响应
+
+- `AuthorizationInterceptor`（无条件注册）：Feign 请求模板没有 `Authorization` 头时，补一个 `Authorization: <随机UUID>`。设计初衷是把上游请求的认证头带下去，但当前实现并不读取原请求的 Authorization 值，而是塞 UUID——依赖下游按 token 校验的场景请勿开启使用，该行为已在评审报告中列为待修项。
+- `ExceptionFilter`（无条件注册，`/*`）：catch 过滤器链上的未处理异常，统一回 500 的 `Result` JSON，避免 Servlet 容器默认错误页。
+
+### 6. 金丝雀发布负载均衡
 
 启用后，自定义 `CanaryReleaseRule` 将替代 Spring Cloud 默认的负载均衡策略，基于 Nacos 元数据中的 `current-version` 实现**开发者级别的流量隔离**，确保多人协作时请求不会被错误路由到其他开发者的本地实例。
 
@@ -197,11 +201,13 @@ spring:
 
 | 配置项 | 类型 | 默认值 | 说明 |
 |--------|------|--------|------|
-| `copilot.idempotent.enabled` | boolean | false | 是否启用幂等性 |
+| `copilot.idempotent.enabled` | boolean | false（matchIfMissing=false） | Feign 侧幂等请求头拦截器 |
+| `copilot.idemtotent.enabled` | boolean | false | 服务端 @Idempotent 切面（键名拼写同源码） |
+| `copilot.sentinel.enabled` | boolean | true（matchIfMissing=true） | SentinelResourceAspect 装配开关（属性类字段默认 false，但不配置时条件视为通过） |
 | `copilot.sentinel.rest-exception-enabled` | boolean | true | Sentinel 异常处理 |
-| `copilot.sentinel.auth-rule.enabled` | boolean | false | 授权规则 |
+| `copilot.sentinel.auth-rule.enabled` | boolean | true（matchIfMissing=true） | 授权规则（不配置即装配 CopilotOriginParser + AuthFlowInterceptor；想关必须显式配 false——与旧文档"默认 false"不符，以源码条件为准） |
 | `copilot.sentinel.auth-rule.header` | String | Auth-Origin | 来源请求头名称 |
-| `copilot.filter.tenant.mandatory` | boolean | false | 是否强制要求租户ID |
+| `copilot.filter.tenant.mandatory` | boolean | false | 是否强制要求租户ID（消费方在 web 模块 TenantIdFilter） |
 | `copilot.lb.canary-release.enabled` | boolean | false | 是否启用金丝雀发布负载均衡 |
 
 ## 依赖说明
