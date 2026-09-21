@@ -8,6 +8,7 @@ import com.awesomecopilot.common.lang.utils.ReflectionUtils;
 import com.awesomecopilot.json.ObjectMapperDecorator;
 import com.awesomecopilot.json.jackson.JacksonUtils;
 import com.awesomecopilot.json.jackson.escapes.CustomCharacterEscapes;
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -15,11 +16,17 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.SmartInitializingSingleton;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * 在Spring容器启动的最后, 所以bean都ready后初始化一下JacksonUtils
+ * 在Spring容器启动的最后, 所有bean都ready后初始化一下JacksonUtils
+ * <p>
+ * 职责(web-starter 的 CopilotJacksonObjectMapperPostProcessor 没有覆盖的部分):
+ * 1. 把容器 ObjectMapper 交给静态 JacksonUtils(反射写回其 objectMapper 字段);
+ * 2. 应用 copilot.jackson.field-name-quote、copilot.jackson.serializers/deserializers 配置.
+ * Copilot 装饰(ObjectMapperDecorator.decorate)与 web 侧共用 ObjectMapperDecorationTracker 判重,
+ * 两个 starter 同时在 classpath 也只装饰一遍.
  * <p>
  * Copyright: (C), 2020/4/30 11:05
  * <p>
@@ -32,28 +39,29 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Slf4j
 public class ObjectMapperBeanPostProcessor implements SmartInitializingSingleton {
 	
-	@Autowired
-	private CopilotJacksonProperties copilotJacksonProperties;
+	private final ObjectProvider<ObjectMapper> objectMapperProvider;
+	private final CopilotJacksonProperties copilotJacksonProperties;
 	
-	/**
-	 * 从容器中取objectMapper
-	 * 这个objectMapper有可能经过Spring处理过的, 比如加入了一些MixIn
-	 * 所以JacksonUtils要拿这个现成的, 否则有些序列化/反序列化可能不支持
-	 */
-	@Autowired
-	private ObjectMapper objectMapper;
+	public ObjectMapperBeanPostProcessor(ObjectProvider<ObjectMapper> objectMapperProvider,
+	                                     CopilotJacksonProperties copilotJacksonProperties) {
+		this.objectMapperProvider = objectMapperProvider;
+		this.copilotJacksonProperties = copilotJacksonProperties;
+	}
 	
 	@Override
 	public void afterSingletonsInstantiated() {
+		ObjectMapper objectMapper = objectMapperProvider.getIfAvailable();
+		if (objectMapper == null) {
+			//容器里没有 ObjectMapper bean(应用 exclude 了 Jackson 自动配置之类), JacksonUtils 用自身默认实例
+			log.info("容器中没有 ObjectMapper bean, 跳过 JacksonUtils 接线与 copilot.jackson.* 配置");
+			return;
+		}
 		log.info("初始化JacksonUtils......");
-		Class<JacksonUtils> jacksonUtilsClass = JacksonUtils.class;
 		if (JacksonUtils.objectMapper() != objectMapper) {
-			log.info(">>>>>>JacksonUtils already initialized? then do it again<<<<<<");
 			if (ObjectMapperDecorationTracker.markDecorated(objectMapper)) {
-				ObjectMapperDecorator decorator = new ObjectMapperDecorator();
-				decorator.decorate(objectMapper);
+				new ObjectMapperDecorator().decorate(objectMapper);
 			}
-			ReflectionUtils.setField("objectMapper", jacksonUtilsClass, objectMapper);
+			ReflectionUtils.setField("objectMapper", JacksonUtils.class, objectMapper);
 		}
 		
 		// 配置输出JSON字段名不用双引号括起来
@@ -62,49 +70,60 @@ public class ObjectMapperBeanPostProcessor implements SmartInitializingSingleton
 			objectMapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
 			
 			//系列化字符串时候, Jackson会把双引号转义, 如\", 这里配置不需要转义
-			objectMapper.getFactory().setCharacterEscapes(new CustomCharacterEscapes());
+			//注意: 转义设置只存在于 JsonFactory 层(ObjectMapper 无全局 setCharacterEscapes),
+			//若宿主用同一个 JsonFactory 构造了多个 mapper, 此设置会作用于全部同源 mapper
+			JsonFactory factory = objectMapper.getFactory();
+			if (factory.getCharacterEscapes() == null) {
+				factory.setCharacterEscapes(new CustomCharacterEscapes());
+			}
 		}
 		
 		/*
-		 * 配置自定义反序列化器
+		 * 配置自定义反序列化器/序列化器: 先收集进同一个 SimpleModule, 循环外一次性注册
+		 * (旧代码在循环体内反复 registerModule 同一个 module, 靠 Jackson 的 typeId 内容哈希
+		 * 才勉强得到覆盖效果, 语义脆弱且 O(n^2)); 实例化失败直接抛异常让启动终止——
+		 * 配置写错必须当场暴露, 不允许"线上偶发反序列化行为不符且无人知配置未生效"
 		 */
+		SimpleModule customModule = new SimpleModule("copilot-jackson-custom");
+		boolean hasCustom = false;
 		if (CollectionUtils.isNotEmpty(copilotJacksonProperties.getDeserializers())) {
-			SimpleModule customModule = new SimpleModule();
 			for (JacksonDeserializer deserializer : copilotJacksonProperties.getDeserializers()) {
 				if (deserializer.getType() == null || deserializer.getDeserializer() == null) {
+					log.error("copilot.jackson.deserializers 条目不完整(type 或 deserializer 缺失): {}", deserializer);
 					continue;
 				}
-				
-				try {
-					customModule.addDeserializer(deserializer.getType(), (JsonDeserializer) deserializer.getDeserializer().newInstance());
-					objectMapper.registerModule(customModule);
-				} catch (InstantiationException e) {
-					log.error("实例化 {} 失败!", deserializer.getDeserializer(), e);
-				} catch (IllegalAccessException e) {
-					log.error("实例化 {} 失败! 没有public构造函数?", deserializer.getDeserializer(), e);
-				}
+				customModule.addDeserializer(deserializer.getType(),
+					instantiate(deserializer.getDeserializer(), JsonDeserializer.class));
+				hasCustom = true;
 			}
 		}
-		
-		/*
-		 * 配置自定义序列化器
-		 */		
 		if (CollectionUtils.isNotEmpty(copilotJacksonProperties.getSerializers())) {
-			SimpleModule customModule = new SimpleModule();
 			for (JacksonSerializer serializer : copilotJacksonProperties.getSerializers()) {
 				if (serializer.getType() == null || serializer.getSerializer() == null) {
+					log.error("copilot.jackson.serializers 条目不完整(type 或 serializer 缺失): {}", serializer);
 					continue;
 				}
-				
-				try {
-					customModule.addSerializer(serializer.getType(), (JsonSerializer) serializer.getSerializer().newInstance());
-					objectMapper.registerModule(customModule);
-				} catch (InstantiationException e) {
-					log.error("实例化 {} 失败!", serializer.getSerializer(), e);
-				} catch (IllegalAccessException e) {
-					log.error("实例化 {} 失败! 没有public构造函数?", serializer.getSerializer(), e);
-				}
+				customModule.addSerializer(serializer.getType(),
+					instantiate(serializer.getSerializer(), JsonSerializer.class));
+				hasCustom = true;
 			}
+		}
+		if (hasCustom) {
+			objectMapper.registerModule(customModule);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	private static <T> T instantiate(Class<?> clazz, Class<T> expect) {
+		try {
+			Object instance = clazz.getDeclaredConstructor().newInstance();
+			if (!expect.isInstance(instance)) {
+				throw new IllegalStateException(clazz.getName() + " 不是 " + expect.getSimpleName() + " 的子类");
+			}
+			return (T) instance;
+		} catch (ReflectiveOperationException e) {
+			//启动期显式失败: 配置引用了不存在/无公共无参构造的类, 悄悄跳过只会把问题拖到线上
+			throw new IllegalStateException("实例化 " + clazz.getName() + " 失败, 需要 public 无参构造函数", e);
 		}
 	}
 }

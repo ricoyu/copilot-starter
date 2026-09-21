@@ -8,7 +8,7 @@ Spring Boot 基础 Starter，提供常用功能自动配置。
 - ✅ @PostInitialize 注解支持（事务就绪后执行）
 - ✅ ApplicationContextHolder（Spring 上下文访问）
 - ✅ LocalTime 自动转换
-- ✅ 循环依赖自动解决
+- ✅ 循环依赖默认允许（Boot 2.6+ 默认禁止，starter 补了默认值，详见第 5 节）
 - ✅ 逻辑删除自动条件
 - ✅ Redis 缓存延迟双删
 - ✅ 时区自动设置
@@ -105,13 +105,12 @@ CopilotFilterProperties properties = ApplicationContextHolder.getBean(CopilotFil
 
 自动配置 `LocalTimeConverter`，支持 LocalTime 类型的自动转换。
 
-### 5. 循环依赖解决
+### 5. 循环依赖（需自行开启，21.0.8 起变更）
 
-默认允许循环依赖（等同于 Spring Boot 2.6 之前的行为）：
-
-```properties
-spring.main.allow-circular-references=true
-```
+本 starter 曾打包一份 `application.properties` 默认为所有应用打开
+`spring.main.allow-circular-references=true`，该文件已删除：
+- 升级后若应用确实存在循环依赖，会在启动时收到 BeanCreationException 循环引用报错——这是 Spring Boot 2.6+ 的默认保护（暴露设计问题），优先建议解开循环引用；
+- 确需放开时，在应用自己的 application.yml/properties 里显式配置 `spring.main.allow-circular-references: true`（此前它可能来自本 jar 内那份文件，且是否生效取决于 classpath 顺序）。
 
 ### 6. 逻辑删除自动条件
 
@@ -163,8 +162,8 @@ copilot:
 | 配置项 | 类型 | 默认值 | 说明 |
 |--------|------|--------|------|
 | `copilot.timezone` | String | Asia/Shanghai | 应用时区 |
-| `copilot.async-transaction` | boolean | true | 是否开启异步事务支持 |
-| `copilot.enable-post-initialize` | boolean | true | 是否开启 @PostInitialize 支持 |
+| `copilot.async-transaction` | boolean | true | 是否开启异步事务支持（camelCase 写法 `copilot.asyncTransaction` 同样识别） |
+| `copilot.enable-post-initialize` | boolean | true | 是否开启 @PostInitialize 支持（camelCase 写法同样识别） |
 | `copilot.cache.enabled` | boolean | false | 是否开启缓存功能 |
 | `copilot.orm.logical-delete.enabled` | boolean | false | 是否开启逻辑删除 |
 | `copilot.orm.logical-delete.field` | String | deleted | 逻辑删除字段名 |

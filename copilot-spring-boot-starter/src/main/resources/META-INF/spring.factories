@@ -1,0 +1,6 @@
+# copilot starter 默认值补位: 仅在应用未配置 spring.main.allow-circular-references 时补 true,
+# 兼容上游 TransactionEvents @PostConstruct 自引用获取的启动方式(详见 CopilotDefaultsEnvironmentPostProcessor javadoc).
+# 注意: 键必须是接口全限定名 org.springframework.boot.env.EnvironmentPostProcessor(接口在 .env 包下),
+# 写错键名 Spring 不会报错、只会当作"没人注册"——这个教训来自独立评审实测(改对前 EPP 不在加载列表里)
+org.springframework.boot.env.EnvironmentPostProcessor=\
+com.awesomecopilot.boot.autoconfig.CopilotDefaultsEnvironmentPostProcessor
