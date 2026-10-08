@@ -102,7 +102,19 @@ public class CopilotGatewayProperties {
 	public static class Auth {
 		
 		/**
-		 * 指定的URI可以匿名访问
+		 * 指定的URI可以匿名访问, url支持 ant_path 风格的URL
+		 * <ul>
+		 *     <li>{@code ?} matches one character
+		 *     <li>{@code *} matches zero or more characters
+		 *     <li>{@code **} matches zero or more directories in a path
+		 *     <li><code>{spring:[a-z]+}</code> matches the regexp [a-z]+ as a path variable named "spring"
+		 * </ul>
+		 * 示例:
+		 * <ul>
+		 *     <li><code>com/t?st.jsp</code> — matches com/test.jsp but also com/tast.jsp or com/txst.jsp
+		 *     <li><code>com/*.jsp</code> — matches all .jsp files in the com directory
+		 *     <li><code>com/**&#47;test.jsp</code> — matches all test.jsp files underneath the com path
+		 * </ul>
 		 */
 		private List<String> whiteList = new ArrayList<>();
 		

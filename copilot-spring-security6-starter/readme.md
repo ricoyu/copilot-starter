@@ -163,6 +163,9 @@ copilot:
 | `copilot.security6.user-pass-login.login-url` | String | /login | 登录URL |
 | `copilot.security6.user-pass-login.logout-url` | String | /logout | 登出URL |
 | `copilot.security6.user-pass-login.role-prefix` | String | ROLE_ | 角色前缀 |
+| `copilot.security6.user-pass-login.token-ttl-minutes` | long | 30 | token 有效期(分钟)；容器里注册了 LoginDurationService bean 时以它返回的每用户时长为准，此配置仅作为无该 bean 时的默认值 |
+| `copilot.security6.feature.pic-code.bind-ip` | boolean | true | 验证码与生成它的客户端 IP 绑定；经 Nginx 时取 X-Forwarded-For 首段（可被伪造，属提高复用成本而非绝对防线）；客户端 IP 频繁漂移的场景可关 |
+| `copilot.security6.feature.pic-code.max-wrong-attempts` | int | 5 | 同一 codeId 允许输错的最大次数，达到后作废（计数从首次输错开始计时、时长与验证码 TTL 相同，因此最迟在码过期后再过一个 TTL 周期归零） |
 | `copilot.security6.feature.anti-duplicate-submit` | boolean | true | 是否启用防重复提交 |
 | `copilot.security6.feature.rate-limit` | boolean | true | 属性类里有该字段，但当前源码未见任何消费点，配置暂无实际效果（限流能力在 web 模块 @RateLimit） |
 | `copilot.security6.feature.pic-code.enabled` | boolean | false | 是否启用图片验证码 |
@@ -300,17 +303,19 @@ copilot:
 前端 GET /pic-code
   → VerifyCodeController:
      1. 生成 12 位随机 codeId（StringUtils.uniqueKey(12)）
-     2. 生成 4 位随机验证码字符串（VerifyCodeUtils.generateVerifyCode(4)）
+     2. 生成 4 位随机验证码字符串（VerifyCodeUtils.generateVerifyCode(4)，SecureRandom，不可按时间推算）
      3. 绘制验证码图片（含干扰线、噪点、扭曲），Base64 编码（VerifyCodeUtils.outputImage）
-     4. Redis 写入 verifycode:{codeId} = 验证码文本，TTL 由 pic-code.ttl 配置（默认 5 分钟）
+     4. Redis 写入 verifycode:{codeId} = "{客户端IP}:{验证码文本}"，TTL 由 pic-code.ttl 配置（默认 5 分钟）
   → 返回 { codeId: "xxx", code: "data:image/jpg;base64,..." }
 
 前端 POST /login?codeId=xxx&code=ABCD&username=rico&password=123
-  → VerifyCodeFilter（仅拦截登录请求）:
-     1. 万能验证码 "ssy666" 直接放行（开发调试用）
-     2. 从 Redis 取 verifycode:{codeId}，与前端提交的 code 参数比对（不区分大小写）
-     3. 不匹配或已过期 → 返回 AUTH_CODE_EXPIRED 错误
-     4. 匹配 → 放行，交给 UsernamePasswordAuthenticationFilter 处理登录
+  → VerifyCodeFilter（仅拦截登录请求，与登录过滤器共用同一 RequestMatcher 判定路径）:
+     1. 先查错误计数（verifycode:{codeId}:wrong）：已达上限则作废该 codeId 并返回 AUTH_CODE_EXPIRED
+     2. 从 Redis 取出 verifycode:{codeId}（只读不删），拆出 IP 前缀与码文本
+     3. IP 绑定检查（pic-code.bind-ip，默认 true）：码不是本客户端生成的按一次错误尝试处理
+     4. 码值不区分大小写比对；错误则计数（pic-code.max-wrong-attempts，默认 5），达上限作废该 codeId
+     5. 比对通过 → 原子取出即删除（并发双击只有一个赢家），放行交给 UsernamePasswordAuthenticationFilter
+     6. 码不存在/已被消费/已过期 → 返回 AUTH_CODE_EXPIRED 错误
 ```
 
 #### 核心组件
@@ -413,7 +418,7 @@ public PasswordEncoder passwordEncoder() {
 │  客户端  │ ──────────────────── → │  Spring Security FilterChain         │
 │          │    {username, password} │                                    │
 │          │                        │  ① HttpServletRequestRepeatedReadFilter (Body可重复读)
-│          │                        │  ② SecurityExceptionFilter           (异常兜底)
+│          │                        │  ② SecurityExceptionFilter           (统一捕获链上异常)
 │          │                        │  ③ PreAuthenticationFilter           (Token认证)
 │          │                        │     └─ 登录请求时跳过(isLoginRequest)
 │          │                        │  ④ UsernamePasswordAuthenticationFilter (登录处理)
@@ -527,7 +532,7 @@ Set<String> tokens = AuthUtils.tokens(username);
 | 顺序 | 组件 | 类 | 职责 |
 |------|------|----|------|
 | 1 | Body重复读 | `HttpServletRequestRepeatedReadFilter` | 包装 Request 使 Body 可重复读取（来自 copilot-web） |
-| 2 | 异常兜底 | `SecurityExceptionFilter` | 捕获过滤器链上未处理的异常，代理给 `RestSecurityExceptionAdvice` |
+| 2 | 异常统一捕获 | `SecurityExceptionFilter` | 捕获过滤器链上未处理的异常，代理给 `RestSecurityExceptionAdvice` |
 | 3 | 验证码 | `VerifyCodeFilter` | 校验图片验证码（仅当 `pic-code.enabled=true` 时注册） |
 | 4 | **Token认证** | `PreAuthenticationFilter` | 从请求头提取 Bearer Token → Redis 验证 → 建立认证上下文 |
 | 5 | **登录处理** | `UsernamePasswordAuthenticationFilter` | 拦截 POST /login → 用户名密码认证 → 成功/失败处理 |
@@ -647,7 +652,7 @@ RestUtils.writeJson(response, result);
 | `MethodSecurityExpressionHandler` | 无条件 | 通配符权限表达式处理器 |
 | `VerifyCodeFilter` | `pic-code.enabled=true` | 验证码过滤器 |
 | `VerifyCodeController` | `pic-code.enabled=true` | 验证码 Controller |
-| `SecurityExceptionFilter` | 无条件 | 异常兜底过滤器 |
+| `SecurityExceptionFilter` | 无条件 | 异常统一捕获过滤器 |
 
 ### SecurityFilterChain 核心配置
 

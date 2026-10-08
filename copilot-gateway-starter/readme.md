@@ -67,8 +67,10 @@ HTTP 状态码约定：
 ### 3. Token 认证（AuthenticationFilter）
 
 `copilot.gateway.auth.enabled=true` 时注册 `AuthenticationFilter`（GlobalFilter）：
+
 1. 请求路径命中 `copilot.gateway.auth.white-list`（Ant 风格）则直接放行；
 2. 否则要求 `Authorization: Bearer <token>`，去掉前缀后调 `AuthUtils.checkToken` 到 **Redis** 校验（token 由登录侧/security6 模块签发进 Redis），无效或过期返回未认证错误。
+3. **重点:** 网关只做认证, 授权下沉到各微服务去做
 
 说明：本 starter 没有 JWT 验签实现，也没有 OAuth2 client-credentials 组件；`jwt-token`、`client-id`、`client-secret`、`auth-server-name` 这些键在 `CopilotGatewayProperties.Auth` 里都不存在，配了也不会绑定生效。属性类里另有一个 `token-key-endpoint`（默认 `/oauth/token_key`），当前源码未见消费点。
 

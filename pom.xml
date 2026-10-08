@@ -10,12 +10,12 @@
     <groupId>com.awesomecopilot</groupId>
     <artifactId>copilot-starter</artifactId>
     <packaging>pom</packaging>
-    <version>21.0.8</version>
+    <version>21.0.9</version>
     <name>copilot Spring Starter Parent</name>
 
     <properties>
         <java.version>21</java.version>
-        <copilot.version>21.0.8</copilot.version>
+        <copilot.version>21.0.9</copilot.version>
         <sentinel.version>1.8.6</sentinel.version>
         <!--<gateway.version>4.1.2</gateway.version>-->
         <gateway.version>2.2.10.RELEASE</gateway.version>

@@ -10,7 +10,7 @@ Spring Cloud 微服务 Starter，提供微服务开发常用功能自动配置�
 - ✅ 多租户支持（Feign 传递 Tenant-Id）
 - ✅ Feign 自动透传 Authorization 请求头
 - ✅ 过滤器链未处理异常的统一 500 JSON 响应（ExceptionFilter）
-- ✅ 金丝雀发布负载均衡（开发者流量隔离）
+- ✅ 金丝雀发布负载均衡（开发者流量隔离），版本号元数据键名可配（`copilot.discovery.metadata.version-key`）
 
 条件说明：`CopilotSpringCloudAutoConfiguration` 整体要求 Servlet 应用（`@ConditionalOnWebApplication(SERVLET)`）。
 
@@ -50,6 +50,11 @@ copilot:
   lb:
     canary-release:
       enabled: false                   # 是否启用金丝雀发布，默认 false
+
+  # 金丝雀匹配依赖的 Nacos 元数据键名
+  discovery:
+    metadata:
+      version-key: current-version     # 版本号元数据键名，默认 current-version
 ```
 
 ## 功能详解
@@ -146,7 +151,7 @@ copilot:
 
 ### 6. 金丝雀发布负载均衡
 
-启用后，自定义 `CanaryReleaseRule` 将替代 Spring Cloud 默认的负载均衡策略，基于 Nacos 元数据中的 `current-version` 实现**开发者级别的流量隔离**，确保多人协作时请求不会被错误路由到其他开发者的本地实例。
+启用后，自定义 `CanaryReleaseRule` 将替代 Spring Cloud 默认的负载均衡策略，基于 Nacos 元数据中的版本号（键名默认 `current-version`，可通过 `copilot.discovery.metadata.version-key` 覆盖）实现**开发者级别的流量隔离**，确保多人协作时请求不会被错误路由到其他开发者的本地实例。
 
 **启用配置：**
 
@@ -197,6 +202,29 @@ spring:
 
 由于各开发者的 `current-version` 带有个人标识且互不相同，第一级或第二级匹配即可精确命中开发者自己的本地实例，有效避免请求串扰。
 
+> 表中的 `current-version` 指默认键名，实际参与匹配的版本号键名以 `copilot.discovery.metadata.version-key` 为准。
+
+**版本号元数据键名可配置（`copilot.discovery.metadata`）：**
+
+版本号在元数据中的键名不写死在代码里，而是收敛到 `copilot.discovery.metadata` 下，默认值即为上面示例使用的 `current-version`，**不配置时行为与历史完全一致**：
+
+```yaml
+copilot:
+  discovery:
+    metadata:
+      version-key: current-version   # 默认值；版本号元数据键名
+```
+
+仅当团队在 Nacos 元数据里使用的是别的键名（例如 `gray-version`）时才需要覆盖；覆盖后 `spring.cloud.nacos.discovery.metadata` 中的实际键名必须与之一致，否则一、二级匹配为空并退化到第三级全量随机。
+
+集群名与权重（`nacos.cluster` / `nacos.weight`）**不作为配置项**：它们由 Spring Cloud Alibaba 标准配置 `spring.cloud.nacos.discovery.cluster-name` 等决定，上报到 Nacos 后的元数据键名固定。
+
+**装配细节：**
+
+- 属性类 `com.awesomecopilot.cloud.properties.DiscoveryMetadataProperties`（前缀 `copilot.discovery.metadata`，位于 `copilot-spring-cloud` 模块）由 `DefaultLBConfig` 的 `@EnableConfigurationProperties` 注册，只在 `copilot.lb.canary-release.enabled=true` 时生效。
+- `CanaryReleaseLoadBalancerConfiguration` 通过 `ObjectProvider<DiscoveryMetadataProperties>` 把它传给 `CanaryReleaseRule` 构造方法；如果业务方绕过 `DefaultLBConfig` 自行注册该负载均衡配置类（属性 Bean 未装配），会自动退化为默认键名 `current-version`，不会因缺 Bean 而启动失败。
+- 自定义负载均衡器跑在 LoadBalancer 子上下文中，属性 Bean 注册在主上下文，靠父子上下文解析，因此该配置项**只需在主配置文件（如 `application.yml`）里写一份**即可。
+
 ## 配置项说明
 
 | 配置项 | 类型 | 默认值 | 说明 |
@@ -209,6 +237,7 @@ spring:
 | `copilot.sentinel.auth-rule.header` | String | Auth-Origin | 来源请求头名称 |
 | `copilot.filter.tenant.mandatory` | boolean | false | 是否强制要求租户ID（消费方在 web 模块 TenantIdFilter） |
 | `copilot.lb.canary-release.enabled` | boolean | false | 是否启用金丝雀发布负载均衡 |
+| `copilot.discovery.metadata.version-key` | String | current-version | 金丝雀匹配使用的版本号元数据键名（属性类 `DiscoveryMetadataProperties`） |
 
 ## 依赖说明
 

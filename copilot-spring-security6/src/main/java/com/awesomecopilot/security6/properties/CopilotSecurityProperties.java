@@ -77,7 +77,7 @@ public class CopilotSecurityProperties {
 		/**
 		 * 是否要集成图片验证码功能
 		 */
-		private PicCode picCode;
+		private PicCode picCode = new PicCode(); //默认非null: 旧版为null, 直接 getFeature().getPicCode().isBindIp() 会 NPE
 
 		/**
 		 * 是否要开启防止重复提交, 开始@AntiDupSubmit注解支持
@@ -123,8 +123,28 @@ public class CopilotSecurityProperties {
 			/**
 			 * 图片验证码多久过期, 默认5分钟
 			 */
-			private long ttl = 5;
+			private long ttl = 5;			
+			/**
+			 * 是否把验证码与生成它的客户端 IP 绑定(校验时比对). 默认 true.
+			 * 经 Nginx 等代理时取 X-Forwarded-For 首段, 该值可被伪造, 绑定只能提高复用成本、不是绝对防线;
+			 * 客户端 IP 天然漂移(移动网络)的场景可配 false.
+			 */
+			private boolean bindIp = true;
+			
+			/**
+			 * 同一个 codeId 允许输错的最大次数, 达到后作废(需重新 GET /pic-code 拿新码). 默认 5.
+			 */
+			private int maxWrongAttempts = 5;
+			
+			public boolean isBindIp() {return bindIp;}
+			
+			public void setBindIp(boolean bindIp) {this.bindIp = bindIp;}
+			
+			public int getMaxWrongAttempts() {return maxWrongAttempts;}
+			
+			public void setMaxWrongAttempts(int maxWrongAttempts) {this.maxWrongAttempts = maxWrongAttempts;}
 
+		
 			public boolean isEnabled() {
 				return enabled;
 			}
@@ -156,6 +176,17 @@ public class CopilotSecurityProperties {
 		 */
 		private String loginUrl = "/login";
 
+		/**
+		 * 登录 token 的有效期(分钟). 旧版写死 30 分钟且 LoginDurationService
+		 * 接口没有任何调用点(评审 P1-7); 现在: 容器里有 LoginDurationService bean
+		 * 则每次登录问它, 否则用这个配置值.
+		 */
+		private long tokenTtlMinutes = 30;
+		
+		public long getTokenTtlMinutes() {return tokenTtlMinutes;}
+		
+		public void setTokenTtlMinutes(long tokenTtlMinutes) {this.tokenTtlMinutes = tokenTtlMinutes;}
+		
 		/**
 		 * 如果开启用户名密码认证, 配置登出URL, 默认 /logout
 		 */

@@ -1,6 +1,7 @@
 package com.awesomecopilot.cloud.loadbalancer;
 
 import com.alibaba.cloud.nacos.NacosDiscoveryProperties;
+import com.awesomecopilot.cloud.properties.DiscoveryMetadataProperties;
 import com.awesomecopilot.common.lang.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
@@ -85,12 +86,24 @@ import java.util.List;
  *   <li>{@code nacos.weight} — 实例权重，由 {@link WeightedRandomSelector} 在同级候选实例中进行加权随机选择。</li>
  * </ul>
  * <p>
+ * <b>键名可配置：</b>上述 {@code current-version} 键名不再写死在代码中，
+ * 而是收敛到 {@link DiscoveryMetadataProperties}（配置前缀 {@code copilot.discovery.metadata}），
+ * 默认值仍为 {@code current-version}，因此不配置时行为与历史完全一致：
+ * <pre>{@code
+ * copilot:
+ *   discovery:
+ *     metadata:
+ *       version-key: current-version   # 版本号元数据键名（默认值）
+ * }</pre>
+ * {@code nacos.cluster} 与 {@code nacos.weight} 则由 Spring Cloud Alibaba 标准配置决定，不开放为配置项。
+ * <p>
  * <b>使用方式：</b>在 Spring Cloud 负载均衡配置中注册本类为自定义 {@code ReactorServiceInstanceLoadBalancer} Bean 即可生效。
  *
  * @author Rico Yu  ricoyu520@gmail.com
  * @version 1.0
  * @see ReactorServiceInstanceLoadBalancer
  * @see NacosDiscoveryProperties
+ * @see DiscoveryMetadataProperties
  * @see WeightedRandomSelector
  */
 @Slf4j
@@ -105,10 +118,17 @@ public class CanaryReleaseRule implements ReactorServiceInstanceLoadBalancer {
 	@Autowired
 	private NacosDiscoveryProperties discoveryProperties;
 
+	/**
+	 * 元数据键名配置, 版本号键名可通过 copilot.discovery.metadata.version-key 覆盖, 默认 current-version
+	 */
+	private final DiscoveryMetadataProperties discoveryMetadataProperties;
+
 	public CanaryReleaseRule(ObjectProvider<ServiceInstanceListSupplier> serviceInstanceListSupplierProvider,
-	                         String serviceId) {
+	                         String serviceId,
+	                         DiscoveryMetadataProperties discoveryMetadataProperties) {
 		this.serviceInstanceListSupplierProvider = serviceInstanceListSupplierProvider;
 		this.serviceId = serviceId;
+		this.discoveryMetadataProperties = discoveryMetadataProperties;
 	}
 
 	@Override
@@ -120,16 +140,18 @@ public class CanaryReleaseRule implements ReactorServiceInstanceLoadBalancer {
 	}
 
 	private Response<ServiceInstance> chooseInstance(List<ServiceInstance> instances) {
+		//版本号在元数据中的键名, 由 copilot.discovery.metadata.version-key 配置, 不配置则取默认值 current-version
+		String versionKey = discoveryMetadataProperties.getVersionKey();
 		//获取当前服务所在的集群名称
 		String clusterName = discoveryProperties.getClusterName();
 		//当前服务的版本号
-		String version = discoveryProperties.getMetadata().get("current-version");
+		String version = discoveryProperties.getMetadata().get(versionKey);
 
 		List<ServiceInstance> theSameClusterNameAndTheSameVersionInstList = new ArrayList<>();
 		// 自定义的选择算法，例如：返回第一个实例, 这里ServiceInstance的实例是 NacosServiceInstance
 		for (ServiceInstance serviceInstance : instances) {
 			if (StringUtils.equalsIgCase(clusterName, serviceInstance.getMetadata().get("nacos.cluster")) &&
-				StringUtils.equalsIgCase(version, serviceInstance.getMetadata().get("current-version"))) {
+				StringUtils.equalsIgCase(version, serviceInstance.getMetadata().get(versionKey))) {
 				theSameClusterNameAndTheSameVersionInstList.add(serviceInstance);
 			}
 		}
@@ -140,13 +162,13 @@ public class CanaryReleaseRule implements ReactorServiceInstanceLoadBalancer {
 			//跨集群调用相同的版本
 			List<ServiceInstance> crossClusterAndTheSameVersionInstList = new ArrayList<>();
 			for (ServiceInstance serviceInstance : instances) {
-				if (StringUtils.equalsIgCase(version, serviceInstance.getMetadata().get("current-version"))) {
+				if (StringUtils.equalsIgCase(version, serviceInstance.getMetadata().get(versionKey))) {
 					crossClusterAndTheSameVersionInstList.add(serviceInstance);
 				}
 			}
 
 			if (crossClusterAndTheSameVersionInstList.isEmpty()) {
-				log.error("跨集群调用也找不到对应合适的版本, 当前版本为: {}", version);
+				log.error("跨集群调用也找不到对应合适的版本, 当前版本为: {}(元数据键名: {})", version, versionKey);
 				//throw new RuntimeException("找不到相同版本的微服务实例");
 				log.info("跨集群跨版本调用");
 				targetInstance = WeightedRandomSelector.chooseRandomlyByWeight(instances);
@@ -155,14 +177,14 @@ public class CanaryReleaseRule implements ReactorServiceInstanceLoadBalancer {
 				targetInstance = WeightedRandomSelector.chooseRandomlyByWeight(crossClusterAndTheSameVersionInstList);
 				log.debug("跨集群同版本调用--->当前微服务所在集群:{},被调用微服务所在集群:{},当前微服务的版本:{},被调用微服务版本:{},Host:{},Port:{}",
 						clusterName, targetInstance.getMetadata().get("nacos.cluster"), version,
-						targetInstance.getMetadata().get("current-version"), targetInstance.getHost(), targetInstance.getPort());
+						targetInstance.getMetadata().get(versionKey), targetInstance.getHost(), targetInstance.getPort());
 			}
 
 		}else {
 			targetInstance = WeightedRandomSelector.chooseRandomlyByWeight(theSameClusterNameAndTheSameVersionInstList);
 			log.debug("同集群同版本调用--->当前微服务所在集群:{},被调用微服务所在集群:{},当前微服务的版本:{},被调用微服务版本:{},Host:{},Port:{}",
 					clusterName, targetInstance.getMetadata().get("nacos.cluster"), version,
-					targetInstance.getMetadata().get("current-version"), targetInstance.getHost(), targetInstance.getPort());
+					targetInstance.getMetadata().get(versionKey), targetInstance.getHost(), targetInstance.getPort());
 		}
 
 		return new DefaultResponse(targetInstance);

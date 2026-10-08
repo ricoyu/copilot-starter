@@ -74,6 +74,15 @@ public class CopilotWebSecurityAutoConfig {
 	@Autowired(required = false)
 	private UserDetailsService userDetailsService;
 
+	/**
+	 * 评审 P2-12: 登录路径判定统一到一个 RequestMatcher 规则——VerifyCodeFilter / PreAuthenticationFilter /
+	 * UsernamePasswordAuthenticationFilter 三处各注入一个同构实例(AntPathRequestMatcher 无可变状态,
+	 * 同规则实例与共享实例等价; 独立评审更正过"两套解析错位"的原表述, 见 PreAuthenticationFilter 类注释).
+	 */
+	private org.springframework.security.web.util.matcher.RequestMatcher loginMatcher() {
+		return new AntPathRequestMatcher(properties.getUserPassLogin().getLoginUrl(), "POST");
+	}
+	
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		log.info("securityFilterChain 开始配置");
@@ -112,6 +121,8 @@ public class CopilotWebSecurityAutoConfig {
 		 * 在过滤器链上发生未处理的异常时, RestExceptionAdvice是处理不到的,
 		 * 所以通过这个Filter来统一捕获, 然后通过HandlerExceptionResolver代理给RestExceptionAdvice来处理
 		 */
+		//评审 P2-10: 自带请求收尾清理(不依赖可选的 web-starter 监听器), 防线程池复用串用户上下文
+		http.addFilterBefore(new com.awesomecopilot.security6.filter.SecurityContextCleanupFilter(), UsernamePasswordAuthenticationFilter.class);
 		http.addFilterBefore(securityExceptionFilter(), UsernamePasswordAuthenticationFilter.class);
 		//提供SpringSecurity过滤器链对Request Body的可重复读取
 		http.addFilterBefore(new HttpServletRequestRepeatedReadFilter(), WebAsyncManagerIntegrationFilter.class);
@@ -201,6 +212,7 @@ public class CopilotWebSecurityAutoConfig {
 	public PreAuthenticationFilter preAuthenticationFilter(AuthenticationManager authenticationManager) {
 		PreAuthenticationFilter authenticationFilter = new PreAuthenticationFilter();
 		authenticationFilter.setProperties(properties);
+		authenticationFilter.setLoginRequestMatcher(loginMatcher());
 		authenticationFilter.setAuthenticationManager(authenticationManager);
 		return authenticationFilter;
 	}
@@ -210,7 +222,9 @@ public class CopilotWebSecurityAutoConfig {
 			= false)
 	public VerifyCodeFilter verifyCodeFilter() {
 		properties.getWhiteList().add("/pic-code");
-		return new VerifyCodeFilter();
+		VerifyCodeFilter filter = new VerifyCodeFilter();
+		filter.setLoginRequestMatcher(loginMatcher());
+		return filter;
 	}
 
 	/*
@@ -222,7 +236,7 @@ public class CopilotWebSecurityAutoConfig {
 		UsernamePasswordAuthenticationFilter authenticationFilter = new UsernamePasswordAuthenticationFilter();
 		authenticationFilter.setAuthenticationSuccessHandler(loginSuccessHandler());
 		authenticationFilter.setAuthenticationFailureHandler(loginFailureHandler());
-		authenticationFilter.setRequiresAuthenticationRequestMatcher(new AntPathRequestMatcher(properties.getUserPassLogin().getLoginUrl(), "POST"));
+		authenticationFilter.setRequiresAuthenticationRequestMatcher(loginMatcher());
 		authenticationFilter.setAuthenticationManager(authenticationManager);
 		return authenticationFilter;
 	}

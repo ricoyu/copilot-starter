@@ -4,9 +4,11 @@ import com.awesomecopilot.cache.JedisUtils;
 import com.awesomecopilot.common.lang.utils.StringUtils;
 import com.awesomecopilot.common.lang.vo.Result;
 import com.awesomecopilot.common.lang.vo.Results;
+import com.awesomecopilot.common.spring.utils.ServletUtils;
 import com.awesomecopilot.security6.constants.SecurityConstants;
 import com.awesomecopilot.security6.properties.CopilotSecurityProperties;
 import com.awesomecopilot.security6.utils.VerifyCodeUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,7 +40,7 @@ public class VerifyCodeController {
 	private CopilotSecurityProperties properties;
 	
 	@GetMapping(PIC_CODE_URL)
-	public Result verificationCode() {
+	public Result verificationCode(HttpServletRequest request) {
 		log.info("verificationCode 开始");
 		//图片验证码唯一ID
 		String codeId = StringUtils.uniqueKey(12);
@@ -47,9 +49,12 @@ public class VerifyCodeController {
 		//生成图片
 		String base64Encoded = VerifyCodeUtils.outputImage(verifyCode);
 		
-		CopilotSecurityProperties.Feature.PicCode picCode = properties.getFeature().getPicCode();;
-		//放到Redis, 5分钟有效期
-		JedisUtils.set(concat(VERIFY_CODE_PREFIX, codeId).toLowerCase(), verifyCode, picCode.getTtl(), MINUTES);
+		CopilotSecurityProperties.Feature.PicCode picCode = properties.getFeature().getPicCode();
+		//评审 P1-2: 存储值绑定生成者 IP(形态 "{ip}:{码}"), 校验端拒绝别机复用;
+		//经代理时 IP 取 X-Forwarded-For 首段, 该值可被伪造, 这是提高复用成本而非绝对防线
+		String valueWithIp = clientIp(request) + ":" + verifyCode;
+		//放到Redis, 有效期由 pic-code.ttl 配置
+		storeCode(concat(VERIFY_CODE_PREFIX, codeId).toLowerCase(), valueWithIp, picCode.getTtl());
 		
 		Map<String, Object> results = new HashMap<>(2);
 		results.put(SecurityConstants.VERIFY_CODE_ID, codeId);
@@ -59,4 +64,13 @@ public class VerifyCodeController {
 		return Results.success().data(results).build();
 	}
 	
+	/** Redis 写入接缝(protected 便于单测覆写) */
+	protected void storeCode(String key, String valueWithIpPrefix, long ttlMinutes) {
+		JedisUtils.set(key, valueWithIpPrefix, ttlMinutes, MINUTES);
+	}
+	
+	/** 客户端真实 IP 接缝 */
+	protected String clientIp(HttpServletRequest request) {
+		return ServletUtils.getRemoteRealIP(request);
+	}
 }

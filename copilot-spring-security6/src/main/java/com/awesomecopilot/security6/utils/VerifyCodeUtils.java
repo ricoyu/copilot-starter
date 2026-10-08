@@ -33,6 +33,8 @@ public class VerifyCodeUtils {
 	 */
 	public static final String VERIFY_CODES = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
 	private static Random random = new Random();
+	/** 验证码文本专用: 每次取值都取系统熵源, 不可由时间推算 */
+	private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 	
 	
 	/**
@@ -57,10 +59,12 @@ public class VerifyCodeUtils {
 			sources = VERIFY_CODES;
 		}
 		int codesLen = sources.length();
-		Random rand = new Random(System.currentTimeMillis());
 		StringBuilder verifyCode = new StringBuilder(verifySize);
 		for (int i = 0; i < verifySize; i++) {
-			verifyCode.append(sources.charAt(rand.nextInt(codesLen - 1)));
+			// SecureRandom: 旧实现 new Random(当前毫秒) 在同一毫秒内的多次调用会得到相同种子、
+			// 生成完全相同的码文本, 且攻击者知道生成时刻即可反推.
+			// nextInt(codesLen): 旧实现传 codesLen-1, 字符表最后一个字符永远取不到.
+			verifyCode.append(sources.charAt(SECURE_RANDOM.nextInt(codesLen)));
 		}
 		return verifyCode.toString();
 	}

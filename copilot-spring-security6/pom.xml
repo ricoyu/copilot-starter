@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.awesomecopilot</groupId>
         <artifactId>copilot-starter</artifactId>
-        <version>21.0.8</version>
+        <version>21.0.9</version>
     </parent>
     <artifactId>copilot-spring-security6</artifactId>
     <version>${project.parent.version}</version>
@@ -83,12 +83,6 @@
         </dependency>
 
 
-        <!-- 处理XSS攻击的lib -->
-        <dependency>
-            <groupId>org.owasp.encoder</groupId>
-            <artifactId>encoder</artifactId>
-            <version>1.2.3</version>
-        </dependency>
        <!-- <dependency>
             <groupId>org.owasp.esapi</groupId>
             <artifactId>esapi</artifactId>
@@ -100,20 +94,34 @@
                 </exclusion>
             </exclusions>
         </dependency>-->
-        <dependency>
-            <groupId>org.jsoup</groupId>
-            <artifactId>jsoup</artifactId>
-            <version>1.13.1</version>
-        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- 本模块直接声明 6.0.0 覆盖父 pom 管理的 5.0.0: spring-test 6.1 的 MockHttpServletRequest
+             构造期引用 Servlet 6.0 才有的 jakarta.servlet.ServletConnection, 实测 5.0.0 时本模块
+             22 个用例 NoClassDefFoundError. 注意不能只改父 pom——其他依赖(如 Boot 管理的 servlet-api
+             传递)会带进 5.0 与容器 tomcat-embed-core 抢 classpath 顺序, 实测同样回退失败, 故保留
+             模块级直接声明(2026-09-21 评审建议6 落地时实测) -->
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>6.0.0</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+        </dependency>
+        <!-- 显式声明 mockito 集成(版本由 spring-boot BOM 管理, 当前解析到 5.x):
+             PreAuthenticationFilterTest 的 mockStatic 依赖 mockito-core>=5 的 inline mock maker,
+             不声明则仅靠 spring-boot-starter-test 传递提供, Boot BOM 降级后 mockStatic 会直接不可用且缺少明确报错来源(2026-09-28 独立评审建议5) -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
